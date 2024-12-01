@@ -1,5 +1,7 @@
 package main
 
+import rl "github.com/gen2brain/raylib-go/raylib"
+
 type Grid struct {
-	origin
+	origin rl.Vector2
 }

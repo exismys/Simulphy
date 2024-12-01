@@ -33,6 +33,7 @@ var primaryCircles []Circle
 var metric bool = true
 var forces bool = false
 var pause bool = false
+var siUnit bool = true
 var colors []rl.Color = []rl.Color{rl.Yellow, rl.Pink, rl.Red, rl.Beige, rl.SkyBlue}
 
 func main() {
@@ -67,6 +68,11 @@ func main() {
 
 	buttonPause := TextButton{
 		pos:  rl.NewVector2(20+60+20+60+20, float32(spaceHeight)+20),
+		text: "",
+	}
+
+	buttonSI := TextButton{
+		pos:  rl.NewVector2(20+60+20+60+20+60+20, float32(spaceHeight)+20),
 		text: "",
 	}
 
@@ -113,6 +119,16 @@ func main() {
 			buttonPause.text = "pause"
 		}
 		buttonPause.draw()
+
+		if buttonSI.isClicked() {
+			siUnit = !siUnit
+		}
+		if siUnit {
+			buttonSI.text = "! SI"
+		} else {
+			buttonSI.text = "SI"
+		}
+		buttonSI.draw()
 
 		drawMetric()
 		showForces()
@@ -189,16 +205,34 @@ func drawMetric() {
 	var n int32 = 1
 	if metric {
 		for _, c := range primaryCircles {
+			posX := c.pos.X
+			posY := c.pos.Y
+			velX := c.vel.X
+			velY := c.vel.Y
+			accX := c.acc.X
+			accY := c.acc.Y
+			unit := "p/s"
+
+			if siUnit {
+				posX = pixelToSI(posX)
+				posY = pixelToSI(posY)
+				velX = pixelToSI(velX)
+				velY = pixelToSI(velY)
+				accX = pixelToSI(accX)
+				accY = pixelToSI(accY)
+				unit = "m/s"
+			}
+
 			// position
-			rl.DrawText(fmt.Sprintf("Position %d: %d, %d", n, int32(c.pos.X), int32(c.pos.Y)), 20, y, 10, rl.Gray)
+			rl.DrawText(fmt.Sprintf("Position %d: (%.2f, %.2f)", n, posX, posY), 20, y, 10, rl.Gray)
 			rl.DrawCircle(10, y+5, 5, c.col)
 
 			// velocity
-			rl.DrawText(fmt.Sprintf("Velocity %d: %d, %d", n, int32(c.vel.X), int32(c.vel.Y)), 220, y, 10, rl.Gray)
+			rl.DrawText(fmt.Sprintf("Velocity %d: (%.2f, %.2f) %s", n, velX, velY, unit), 220, y, 10, rl.Gray)
 			rl.DrawCircle(210, y+5, 5, c.col)
 
 			// acceleration
-			rl.DrawText(fmt.Sprintf("Acceleration %d: %d, %d", n, int32(c.acc.X), int32(c.acc.Y)), 420, y, 10, rl.Gray)
+			rl.DrawText(fmt.Sprintf("Acceleration %d: (%.2f, %.2f) %s", n, accX, accY, unit), 420, y, 10, rl.Gray)
 			rl.DrawCircle(410, y+5, 5, c.col)
 
 			y += 20
@@ -241,4 +275,13 @@ func playPause() {
 		}
 		primaryCircles = circles
 	}
+}
+
+// 1 meter = 20px
+func pixelToSI(pixel float32) float32 {
+	return pixel / 20
+}
+
+func toPixel(si float32) float32 {
+	return si * 20
 }
