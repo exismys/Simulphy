@@ -36,6 +36,7 @@ var metric bool = true
 var forces bool = false
 var pause bool = false
 var siUnit bool = true
+var showGrid bool = false
 var colors []rl.Color = []rl.Color{rl.Yellow, rl.Pink, rl.Red, rl.Beige, rl.SkyBlue}
 
 func main() {
@@ -75,6 +76,11 @@ func main() {
 
 	buttonSI := TextButton{
 		pos:  rl.NewVector2(20+60+20+60+20+60+20, float32(spaceHeight)+20),
+		text: "",
+	}
+
+	buttonGrid := TextButton{
+		pos:  rl.NewVector2(20+60+20+60+20+60+20+60+20, float32(spaceHeight)+20),
 		text: "",
 	}
 
@@ -137,7 +143,17 @@ func main() {
 		}
 		buttonSI.draw()
 
-		grid.draw()
+		if buttonGrid.isClicked() {
+			showGrid = !showGrid
+		}
+		if showGrid {
+			buttonGrid.text = "! grid"
+			grid.draw()
+		} else {
+			buttonGrid.text = "grid"
+		}
+		buttonGrid.draw()
+
 		drawMetric()
 		showForces()
 
