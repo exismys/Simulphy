@@ -20,6 +20,8 @@ const spaceHeight int32 = 900
 const windowWidth int32 = spaceWidth
 const windowHeight int32 = spaceHeight + 80
 
+const pixelPerMetre int32 = 20
+
 const targetFPS int32 = 60
 const fixedDeltaTime float32 = 1 / float32(targetFPS)
 
@@ -76,6 +78,11 @@ func main() {
 		text: "",
 	}
 
+	grid := Grid{
+		rl.NewVector2(400, 400),
+		rl.DarkGray,
+	}
+
 	accumulatedTime := float32(0)
 	for !rl.WindowShouldClose() {
 		accumulatedTime += rl.GetFrameTime()
@@ -130,6 +137,7 @@ func main() {
 		}
 		buttonSI.draw()
 
+		grid.draw()
 		drawMetric()
 		showForces()
 
@@ -279,9 +287,9 @@ func playPause() {
 
 // 1 meter = 20px
 func pixelToSI(pixel float32) float32 {
-	return pixel / 20
+	return pixel / float32(pixelPerMetre)
 }
 
 func toPixel(si float32) float32 {
-	return si * 20
+	return si * float32(pixelPerMetre)
 }
