@@ -89,15 +89,23 @@ func main() {
 		rl.DarkGray,
 	}
 
+	graph := XYGraph{
+		grid:   grid,
+		points: []rl.Vector2{},
+	}
+
 	accumulatedTime := float32(0)
+	var time float32 = 0
 	for !rl.WindowShouldClose() {
 		accumulatedTime += rl.GetFrameTime()
+		time += rl.GetFrameTime()
 		for accumulatedTime >= fixedDeltaTime {
 			for i := range circles {
 				circles[i].move()
 			}
 			accumulatedTime -= fixedDeltaTime
 		}
+		graph.points = append(graph.points, rl.NewVector2(time, circles[0].vel.Y))
 		rl.BeginDrawing()
 
 		rl.DrawLine(0, spaceHeight, windowWidth, spaceHeight, rl.Gray)
@@ -111,6 +119,7 @@ func main() {
 			buttonMetric.text = "metric"
 		}
 		buttonMetric.draw()
+		// Todo: make toggle text part of the TextButton type
 
 		if buttonForce.isClicked() {
 			forces = !forces
@@ -160,6 +169,7 @@ func main() {
 		for _, c := range circles {
 			c.draw()
 		}
+		graph.draw()
 
 		applyAccAtMousePos()
 
