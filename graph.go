@@ -9,6 +9,7 @@ import (
 type XYGraph struct {
 	origin rl.Vector2
 	points []rl.Vector2
+	color  rl.Color
 }
 
 func (g *XYGraph) draw() {
@@ -24,6 +25,6 @@ func (g *XYGraph) draw() {
 		scaledX := g.origin.X + float32(xi)
 		xi++
 		fmt.Println(scaledY)
-		rl.DrawPixelV(rl.NewVector2(scaledX, float32(scaledY)), rl.Red)
+		rl.DrawPixelV(rl.NewVector2(scaledX, float32(scaledY)), g.color)
 	}
 }

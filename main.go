@@ -79,9 +79,13 @@ func main() {
 		text: "",
 	}
 
-	graph := XYGraph{
-		origin: rl.NewVector2(400, 400),
-		points: []rl.Vector2{},
+	graphs := []XYGraph{}
+	for _, c := range circles {
+		graphs = append(graphs, XYGraph{
+			origin: rl.NewVector2(400, 400),
+			points: []rl.Vector2{},
+			color:  c.col,
+		})
 	}
 
 	accumulatedTime := float32(0)
@@ -92,8 +96,8 @@ func main() {
 		for accumulatedTime >= fixedDeltaTime {
 			for i := range circles {
 				circles[i].move()
+				graphs[i].points = append(graphs[i].points, circles[i].pos)
 			}
-			graph.points = append(graph.points, circles[0].pos)
 			accumulatedTime -= fixedDeltaTime
 		}
 		rl.BeginDrawing()
@@ -148,7 +152,9 @@ func main() {
 		for _, c := range circles {
 			c.draw()
 		}
-		graph.draw()
+		for _, g := range graphs {
+			g.draw()
+		}
 
 		applyAccAtMousePos()
 
