@@ -96,7 +96,9 @@ func main() {
 		for accumulatedTime >= fixedDeltaTime {
 			for i := range circles {
 				circles[i].move()
-				graphs[i].points = append(graphs[i].points, circles[i].pos)
+				if len(graphs[i].points) < 1000 {
+					graphs[i].points = append(graphs[i].points, circles[i].pos)
+				}
 			}
 			accumulatedTime -= fixedDeltaTime
 		}
