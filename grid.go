@@ -9,11 +9,6 @@ type Grid struct {
 	lineColor rl.Color
 }
 
-type XYGraph struct {
-	grid   Grid
-	points []rl.Vector2
-}
-
 func (g *Grid) draw() {
 	// Horizontal lines
 	for y := g.origin.Y; y >= 0; y -= float32(pixelPerMetre) {
@@ -29,11 +24,5 @@ func (g *Grid) draw() {
 	}
 	for x := g.origin.X + float32(pixelPerMetre); x < float32(spaceWidth); x += float32(pixelPerMetre) {
 		rl.DrawLine(int32(x), 0, int32(x), spaceHeight-1, g.lineColor)
-	}
-}
-
-func (g *XYGraph) draw() {
-	for _, p := range g.points {
-		rl.DrawPixelV(p, rl.Red)
 	}
 }

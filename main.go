@@ -79,18 +79,8 @@ func main() {
 		text: "",
 	}
 
-	buttonGrid := TextButton{
-		pos:  rl.NewVector2(20+60+20+60+20+60+20+60+20, float32(spaceHeight)+20),
-		text: "",
-	}
-
-	grid := Grid{
-		rl.NewVector2(400, 400),
-		rl.DarkGray,
-	}
-
 	graph := XYGraph{
-		grid:   grid,
+		origin: rl.NewVector2(400, 400),
 		points: []rl.Vector2{},
 	}
 
@@ -103,9 +93,9 @@ func main() {
 			for i := range circles {
 				circles[i].move()
 			}
+			graph.points = append(graph.points, circles[0].pos)
 			accumulatedTime -= fixedDeltaTime
 		}
-		graph.points = append(graph.points, rl.NewVector2(time, circles[0].vel.Y))
 		rl.BeginDrawing()
 
 		rl.DrawLine(0, spaceHeight, windowWidth, spaceHeight, rl.Gray)
@@ -151,17 +141,6 @@ func main() {
 			buttonSI.text = "SI"
 		}
 		buttonSI.draw()
-
-		if buttonGrid.isClicked() {
-			showGrid = !showGrid
-		}
-		if showGrid {
-			buttonGrid.text = "! grid"
-			grid.draw()
-		} else {
-			buttonGrid.text = "grid"
-		}
-		buttonGrid.draw()
 
 		drawMetric()
 		showForces()
