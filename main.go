@@ -15,7 +15,7 @@ const (
 	pixelsPerMeter int32   = 20
 	targetFPS      int32   = 60
 	fixedDeltaTime float32 = 1 / float32(targetFPS)
-	dampingFactor  float32 = 0.9
+	dampingFactor  float32 = 0.9 // Todo: Remove this and implement proper collision with energy loss
 	numCircles     int32   = 5
 	radius         int32   = 10
 )
