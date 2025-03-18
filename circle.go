@@ -14,7 +14,7 @@ func (c *Circle) draw() {
 	rl.DrawCircle(int32(c.pos.X), int32(c.pos.Y), float32(c.radius), c.col)
 }
 
-func (c *Circle) move() {
+func (c *Circle) update() {
 	deltaTime := fixedDeltaTime
 
 	// Calculate velocity
@@ -41,4 +41,15 @@ func (c *Circle) move() {
 		c.pos.Y = float32(simHeight) - c.radius
 		c.vel.Y *= -1 * dampingFactor
 	}
+}
+
+func (c *Circle) isDynamic() bool {
+	return true
+}
+
+func (c *Circle) isClicked() bool {
+	mousePos := rl.GetMousePosition()
+	dx := c.pos.X - mousePos.X
+	dy := c.pos.Y - mousePos.Y
+	return rl.IsMouseButtonPressed(rl.MouseLeftButton) && (dx*dx+dy*dy <= c.radius*c.radius)
 }
