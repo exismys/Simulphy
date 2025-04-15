@@ -1,6 +1,9 @@
 package main
 
 import (
+	// "fmt"
+	"math/rand/v2"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -23,25 +26,44 @@ type SimObject interface {
 }
 
 type Simulation struct {
-	objects []SimObject
+	circles []Circle
+	// primaryCircles  []Circle
 	// graphs          []XYGraph
-	buttons         map[string]*TextButton
-	runSim          bool
-	accumulatedTime float32
+	buttons map[string]*TextButton
 	// metric          bool
 	// forces          bool
 	// paused          bool
 	// siUnit          bool
 	// showGrid        bool
 	// accumulatedTime float32
+	// elapsedTime     float32
+	cameraOffset rl.Vector2
 }
 
 var colors []rl.Color = []rl.Color{rl.Yellow, rl.Pink, rl.Red, rl.Beige, rl.SkyBlue}
 
 func NewSimulation() *Simulation {
 	sim := &Simulation{
-		buttons: make(map[string]*TextButton),
+		circles: make([]Circle, numCircles),
+		// primaryCircles: make([]Circle, numCircles),
+		// metric:         true,
+		// siUnit:         true,
+		buttons:      make(map[string]*TextButton),
+		cameraOffset: rl.NewVector2(0, 0),
 	}
+
+	// Initial circles
+	for i := 0; i < int(numCircles); i++ {
+		x := rand.Float32() * float32(simWidth)
+		sim.circles[i] = Circle{
+			pos:    rl.NewVector2(x, 400),
+			radius: float32(radius),
+			vel:    rl.NewVector2(20, -700),
+			acc:    rl.NewVector2(0, 700),
+			col:    colors[i],
+		}
+	}
+	// copy(sim.primaryCircles, sim.circles)
 
 	// Initialize graphs
 	// for _, c := range sim.circles {
@@ -53,7 +75,7 @@ func NewSimulation() *Simulation {
 	// }
 
 	// Initialize buttons
-	buttonNames := []string{"Add", "Run"}
+	buttonNames := []string{"Add Object"} // {"Metric", "Forces", "Pause", "SI"}
 	xPos := float32(20)
 	for _, name := range buttonNames {
 		sim.buttons[name] = &TextButton{
@@ -67,40 +89,52 @@ func NewSimulation() *Simulation {
 }
 
 func (sim *Simulation) Run() {
+	dragStart := rl.NewVector2(0, 0)
+	isDragging := false
 	for !rl.WindowShouldClose() {
-		sim.accumulatedTime += rl.GetFrameTime()
-		for sim.accumulatedTime >= fixedDeltaTime {
-			sim.updatePhysics()
-			sim.accumulatedTime -= fixedDeltaTime
+		if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+			isDragging = true
+			dragStart = rl.GetMousePosition()
 		}
-		sim.updatePhysics()
+		if isDragging {
+			mouseDelta := rl.Vector2Subtract(dragStart, rl.GetMousePosition())
+			sim.cameraOffset = rl.Vector2Add(sim.cameraOffset, mouseDelta)
+			dragStart = rl.GetMousePosition()
+		}
+		if rl.IsMouseButtonReleased(rl.MouseButtonLeft) {
+			isDragging = false
+		}
+		// sim.accumulatedTime += rl.GetFrameTime()
+		// sim.elapsedTime += rl.GetFrameTime()
+
+		// for sim.accumulatedTime >= fixedDeltaTime {
+		// 	sim.updatePhysics()
+		// 	sim.accumulatedTime -= fixedDeltaTime
+		// }
+
 		sim.handleInput()
 		sim.render()
 	}
 }
 
-func (sim *Simulation) updatePhysics() {
-	if !sim.runSim {
-		return
-	}
-
-	for i := range sim.objects {
-		sim.objects[i].update()
-	}
-
-	// for i := range sim.circles {
-	// 	sim.circles[i].update()
-	// if len(sim.graphs[i].points) < 1000 {
-	// 	sim.graphs[i].points = append(sim.graphs[i].points, sim.circles[i].pos)
-	// }
-	// }
-}
+// func (sim *Simulation) updatePhysics() {
+// 	if sim.paused {
+// 		return
+// 	}
+//
+// 	for i := range sim.circles {
+// 		sim.circles[i].move()
+// 		if len(sim.graphs[i].points) < 1000 {
+// 			sim.graphs[i].points = append(sim.graphs[i].points, sim.circles[i].pos)
+// 		}
+// 	}
+// }
 
 func (sim *Simulation) handleInput() {
+	if sim.buttons["Add Object"].isClicked() {
+		// Logic for listing choice
 
-	// if sim.buttons["Metric"].isClicked() {
-	// 	sim.metric = !sim.metric
-	// }
+	}
 	// if sim.buttons["Forces"].isClicked() {
 	// 	sim.forces = !sim.forces
 	// }
@@ -110,19 +144,20 @@ func (sim *Simulation) handleInput() {
 	// if sim.buttons["SI"].isClicked() {
 	// 	sim.siUnit = !sim.siUnit
 	// }
-	if sim.buttons["Run"].isClicked() {
-		sim.runSim = !sim.runSim
-	}
-	if sim.buttons["Add"].isClicked() {
-		sim.objects = append(sim.objects, &Circle{
-			pos:    rl.NewVector2(400, 400),
-			radius: float32(10),
-			vel:    rl.NewVector2(20, -700),
-			acc:    rl.NewVector2(0, 700),
-			col:    colors[len(sim.objects)%len(colors)],
-		})
-	}
 }
+
+// func (sim *Simulation) togglePause() {
+// 	sim.paused = !sim.paused
+// 	if sim.paused {
+// 		copy(sim.primaryCircles, sim.circles)
+// 		for i := range sim.circles {
+// 			sim.circles[i].vel = rl.NewVector2(0, 0)
+// 			sim.circles[i].acc = rl.NewVector2(0, 0)
+// 		}
+// 	} else {
+// 		copy(sim.circles, sim.primaryCircles)
+// 	}
+// }
 
 func (sim *Simulation) render() {
 	rl.BeginDrawing()
@@ -134,9 +169,9 @@ func (sim *Simulation) render() {
 		btn.draw()
 	}
 
-	// Draw objects
-	for _, obj := range sim.objects {
-		obj.draw()
+	// Draw circles
+	for _, c := range sim.circles {
+		c.draw(&sim.cameraOffset)
 	}
 
 	// Draw graphs
@@ -156,19 +191,19 @@ func (sim *Simulation) render() {
 // 	if !sim.metric {
 // 		return
 // 	}
-
+//
 // 	y := int32(20)
 // 	for i, c := range sim.primaryCircles {
 // 		posX, posY := c.pos.X, c.pos.Y
 // 		velX, velY := c.vel.X, c.vel.Y
-
+//
 // 		unit := "p/s"
 // 		if sim.siUnit {
 // 			posX, posY = pixelToSI(posX), pixelToSI(posY)
 // 			velX, velY = pixelToSI(velX), pixelToSI(velY)
 // 			unit = "m/s"
 // 		}
-
+//
 // 		rl.DrawText(fmt.Sprintf("Circle %d: (%.2f, %.2f) %s", i+1, posX, posY, unit), 20, y, 10, rl.Gray)
 // 		y += 20
 // 	}
@@ -206,6 +241,14 @@ func main() {
 // 			}
 // 		}
 // 	}
+// }
+
+// func mouseInSpace() bool {
+// 	mousePos := rl.GetMousePosition()
+// 	if mousePos.X < float32(simWidth) && mousePos.Y < float32(simHeight) {
+// 		return true
+// 	}
+// 	return false
 // }
 
 // func drawMetric() {

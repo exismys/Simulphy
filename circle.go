@@ -10,8 +10,8 @@ type Circle struct {
 	col           rl.Color
 }
 
-func (c *Circle) draw() {
-	rl.DrawCircle(int32(c.pos.X), int32(c.pos.Y), float32(c.radius), c.col)
+func (c *Circle) draw(cameraOffset *rl.Vector2) {
+	rl.DrawCircle(int32(c.pos.X-cameraOffset.X), int32(c.pos.Y-cameraOffset.Y), float32(c.radius), c.col)
 }
 
 func (c *Circle) update() {
