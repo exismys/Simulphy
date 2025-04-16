@@ -22,13 +22,13 @@ const (
 
 type SimObject interface {
 	update()
-	draw()
+	draw(cameraOffset *rl.Vector2)
 	isDynamic() bool
 	isClicked() bool
 }
 
 type Simulation struct {
-	circles []Circle
+	objects []SimObject
 	// primaryCircles  []Circle
 	// graphs          []XYGraph
 	buttons map[string]*TextButton
@@ -46,7 +46,7 @@ var colors []rl.Color = []rl.Color{rl.Yellow, rl.Pink, rl.Red, rl.Beige, rl.SkyB
 
 func NewSimulation() *Simulation {
 	sim := &Simulation{
-		circles: make([]Circle, numCircles),
+		objects: make([]SimObject, 0),
 		// primaryCircles: make([]Circle, numCircles),
 		// metric:         true,
 		// siUnit:         true,
@@ -58,13 +58,13 @@ func NewSimulation() *Simulation {
 	for i := 0; i < int(numCircles); i++ {
 		color := i % len(colors)
 		x := rand.Float32() * float32(simWidth)
-		sim.circles[i] = Circle{
+		sim.objects = append(sim.objects, &Circle{
 			pos:    rl.NewVector2(x, 400),
 			radius: float32(radius),
 			vel:    rl.NewVector2(20, -700),
 			acc:    rl.NewVector2(0, 700),
 			col:    colors[color],
-		}
+		})
 	}
 	// copy(sim.primaryCircles, sim.circles)
 
@@ -173,7 +173,7 @@ func (sim *Simulation) render() {
 	}
 
 	// Draw circles
-	for _, c := range sim.circles {
+	for _, c := range sim.objects {
 		c.draw(&sim.cameraOffset)
 	}
 
