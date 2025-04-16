@@ -1,4 +1,4 @@
-module GoRaylib
+module simulphy
 
 go 1.23.1
 
