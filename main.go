@@ -14,6 +14,8 @@ const (
 	windowHeight   int32   = simHeight + 80
 	targetFPS      int32   = 60
 	fixedDeltaTime float32 = 1 / float32(targetFPS)
+	numCircles             = 10
+	radius                 = 10
 	dampingFactor  float32 = 0.9 // Todo: Remove this and implement proper collision with energy loss
 	// pixelsPerMeter int32 = 20
 )
@@ -54,13 +56,14 @@ func NewSimulation() *Simulation {
 
 	// Initial circles
 	for i := 0; i < int(numCircles); i++ {
+		color := i % len(colors)
 		x := rand.Float32() * float32(simWidth)
 		sim.circles[i] = Circle{
 			pos:    rl.NewVector2(x, 400),
 			radius: float32(radius),
 			vel:    rl.NewVector2(20, -700),
 			acc:    rl.NewVector2(0, 700),
-			col:    colors[i],
+			col:    colors[color],
 		}
 	}
 	// copy(sim.primaryCircles, sim.circles)
