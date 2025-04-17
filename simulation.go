@@ -30,6 +30,9 @@ func NewSimulation() *Simulation {
 			Visible:    false,
 			Items:      []string{"AND", "NOT"},
 			ItemHeight: 50,
+			OnSelect: func(item string) {
+				fmt.Println("OnSelect trigger for ", item)
+			},
 		},
 	}
 

@@ -10,7 +10,7 @@ type Inventory struct {
 	Pos        rl.Vector2
 	Visible    bool
 	Items      []string
-	buttons    []Button
+	buttons    []*Button
 	OnSelect   func(item string)
 	ItemHeight int
 }
@@ -30,9 +30,13 @@ func (inv *Inventory) Draw() {
 			Label: item,
 			OnClick: func() {
 				fmt.Println("Clicked ", item)
+				if inv.OnSelect != nil {
+					inv.OnSelect(item)
+				}
 			},
 		}
-		inv.buttons = append(inv.buttons, *btn)
+		inv.buttons = append(inv.buttons, btn)
+		fmt.Println(len(inv.buttons))
 		btn.Draw()
 	}
 }
