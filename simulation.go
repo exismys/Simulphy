@@ -25,15 +25,14 @@ func NewSimulation() *Simulation {
 		objects:      make([]SimObject, 0),
 		buttons:      make([]*Button, 0),
 		cameraOffset: rl.NewVector2(0, 0),
-		inventory: Inventory{
-			Pos:        rl.NewVector2(200, 200),
-			Visible:    false,
-			Items:      []string{"AND", "NOT"},
-			ItemHeight: 50,
-			OnSelect: func(item string) {
+		inventory: *NewInventory(
+			rl.NewVector2(200, 200),
+			[]string{"AND", "NOT", "Circle"},
+			50,
+			func(item string) {
 				fmt.Println("OnSelect trigger for ", item)
 			},
-		},
+		),
 	}
 
 	// Initialize button
