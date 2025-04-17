@@ -73,6 +73,7 @@ func (sim *Simulation) HandleInput() {
 	for _, btn := range sim.buttons {
 		btn.HandleInput()
 	}
+	sim.inventory.HandleInput()
 }
 
 func (sim *Simulation) Render() {

@@ -10,6 +10,7 @@ type Inventory struct {
 	Pos        rl.Vector2
 	Visible    bool
 	Items      []string
+	buttons    []Button
 	OnSelect   func(item string)
 	ItemHeight int
 }
@@ -31,7 +32,13 @@ func (inv *Inventory) Draw() {
 				fmt.Println("Clicked ", item)
 			},
 		}
-		btn.HandleInput()
+		inv.buttons = append(inv.buttons, *btn)
 		btn.Draw()
+	}
+}
+
+func (inv *Inventory) HandleInput() {
+	for _, btn := range inv.buttons {
+		btn.HandleInput()
 	}
 }
