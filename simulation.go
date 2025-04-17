@@ -16,7 +16,7 @@ type SimObject interface {
 type Simulation struct {
 	objects      []SimObject
 	buttons      []*Button
-	inventory    []*Inventory
+	inventory    Inventory
 	cameraOffset rl.Vector2
 }
 
@@ -25,6 +25,12 @@ func NewSimulation() *Simulation {
 		objects:      make([]SimObject, 0),
 		buttons:      make([]*Button, 0),
 		cameraOffset: rl.NewVector2(0, 0),
+		inventory: Inventory{
+			Pos:        rl.NewVector2(200, 200),
+			Visible:    false,
+			Items:      []string{"AND", "NOT"},
+			ItemHeight: 50,
+		},
 	}
 
 	// Initialize button
@@ -33,7 +39,8 @@ func NewSimulation() *Simulation {
 		Size:  rl.NewVector2(100, 50),
 		Label: "Add",
 		OnClick: func() {
-			fmt.Println("The button was clicked!")
+			fmt.Println("The Add button was clicked!")
+			sim.inventory.Visible = true
 		},
 	})
 
@@ -66,7 +73,6 @@ func (sim *Simulation) HandleInput() {
 	for _, btn := range sim.buttons {
 		btn.HandleInput()
 	}
-
 }
 
 func (sim *Simulation) Render() {
@@ -83,6 +89,7 @@ func (sim *Simulation) Render() {
 	for _, btn := range sim.buttons {
 		btn.Draw()
 	}
+	sim.inventory.Draw()
 
 	rl.EndDrawing()
 }
