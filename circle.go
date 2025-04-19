@@ -53,3 +53,15 @@ func (c *Circle) isClicked() bool {
 	dy := c.pos.Y - mousePos.Y
 	return rl.IsMouseButtonPressed(rl.MouseLeftButton) && (dx*dx+dy*dy <= c.radius*c.radius)
 }
+
+func (c *Circle) setPosition(position rl.Vector2) {
+	c.pos = position
+}
+
+func (c *Circle) setTranslucent(set bool) {
+	if set {
+		c.color.A = 128
+	} else {
+		c.color.A = 255
+	}
+}

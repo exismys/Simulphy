@@ -11,10 +11,13 @@ type SimObject interface {
 	draw(cameraOffset *rl.Vector2)
 	isDynamic() bool
 	isClicked() bool
+	setPosition(rl.Vector2)
+	setTranslucent(bool)
 }
 
 type Simulation struct {
 	objects      []SimObject
+	ghostObject  SimObject
 	buttons      []*Button
 	inventory    Inventory
 	cameraOffset rl.Vector2
@@ -32,7 +35,8 @@ func NewSimulation() *Simulation {
 		50,
 		func(item string) {
 			fmt.Println("-> Adding object: ", item)
-			sim.addObject(item)
+			sim.setGhostObject(item)
+			// sim.addObject(item)
 		},
 	)
 
@@ -65,6 +69,13 @@ func (sim *Simulation) Run() {
 		}
 		if rl.IsMouseButtonReleased(rl.MouseButtonRight) {
 			isDragging = false
+		}
+
+		if sim.ghostObject != nil && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+			sim.ghostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.cameraOffset))
+			sim.ghostObject.setTranslucent(false)
+			sim.objects = append(sim.objects, sim.ghostObject)
+			sim.ghostObject = nil
 		}
 
 		sim.HandleInput()
@@ -102,21 +113,22 @@ func (sim *Simulation) Render() {
 	}
 	sim.inventory.Draw()
 
+	// Draw ghost object
+	if sim.ghostObject != nil {
+		sim.ghostObject.setPosition(rl.GetMousePosition())
+		cameraOffset := rl.NewVector2(0, 0)
+		sim.ghostObject.draw(&cameraOffset)
+	}
+
 	rl.EndDrawing()
 }
 
-func (sim *Simulation) addObject(item string) {
+func (sim *Simulation) setGhostObject(item string) {
 	if item == "CIRCLE" {
-		sim.addCircle()
+		sim.ghostObject = &Circle{
+			pos:    rl.GetMousePosition(),
+			radius: 20,
+			color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
+		}
 	}
-}
-
-func (sim *Simulation) addCircle() {
-	circle := &Circle{
-		pos:    rl.NewVector2(float32(simWidth)/2, float32(simHeight)/2),
-		vel:    rl.NewVector2(10, 10),
-		radius: 20,
-		color:  rl.Red,
-	}
-	sim.objects = append(sim.objects, circle)
 }
