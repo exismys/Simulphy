@@ -32,7 +32,7 @@ func NewSimulation() *Simulation {
 		50,
 		func(item string) {
 			fmt.Println("-> Adding object: ", item)
-			sim.addCircle()
+			sim.addObject(item)
 		},
 	)
 
@@ -68,6 +68,7 @@ func (sim *Simulation) Run() {
 		}
 
 		sim.HandleInput()
+		// sim.Update()
 		sim.Render()
 	}
 }
@@ -77,6 +78,12 @@ func (sim *Simulation) HandleInput() {
 		btn.HandleInput()
 	}
 	sim.inventory.HandleInput()
+}
+
+func (sim *Simulation) Update() {
+	for _, obj := range sim.objects {
+		obj.update()
+	}
 }
 
 func (sim *Simulation) Render() {
@@ -98,9 +105,16 @@ func (sim *Simulation) Render() {
 	rl.EndDrawing()
 }
 
+func (sim *Simulation) addObject(item string) {
+	if item == "CIRCLE" {
+		sim.addCircle()
+	}
+}
+
 func (sim *Simulation) addCircle() {
 	circle := &Circle{
 		pos:    rl.NewVector2(float32(simWidth)/2, float32(simHeight)/2),
+		vel:    rl.NewVector2(10, 10),
 		radius: 20,
 		color:  rl.Red,
 	}
