@@ -25,15 +25,16 @@ func NewSimulation() *Simulation {
 		objects:      make([]SimObject, 0),
 		buttons:      make([]*Button, 0),
 		cameraOffset: rl.NewVector2(0, 0),
-		inventory: *NewInventory(
-			rl.NewVector2(200, 200),
-			[]string{"AND", "NOT", "Circle"},
-			50,
-			func(item string) {
-				fmt.Println("OnSelect trigger for ", item)
-			},
-		),
 	}
+	sim.inventory = *NewInventory(
+		rl.NewVector2(20, 200),
+		[]string{"AND", "NOT", "CIRCLE"},
+		50,
+		func(item string) {
+			fmt.Println("-> Adding object: ", item)
+			sim.addCircle()
+		},
+	)
 
 	// Initialize button
 	sim.buttons = append(sim.buttons, &Button{
@@ -53,7 +54,7 @@ func (sim *Simulation) Run() {
 	dragStart := rl.NewVector2(0, 0)
 	isDragging := false
 	for !rl.WindowShouldClose() {
-		if rl.IsMouseButtonPressed(rl.MouseLeftButton) {
+		if rl.IsMouseButtonPressed(rl.MouseRightButton) {
 			isDragging = true
 			dragStart = rl.GetMousePosition()
 		}
@@ -62,7 +63,7 @@ func (sim *Simulation) Run() {
 			sim.cameraOffset = rl.Vector2Add(sim.cameraOffset, mouseDelta)
 			dragStart = rl.GetMousePosition()
 		}
-		if rl.IsMouseButtonReleased(rl.MouseButtonLeft) {
+		if rl.IsMouseButtonReleased(rl.MouseButtonRight) {
 			isDragging = false
 		}
 
@@ -95,4 +96,13 @@ func (sim *Simulation) Render() {
 	sim.inventory.Draw()
 
 	rl.EndDrawing()
+}
+
+func (sim *Simulation) addCircle() {
+	circle := &Circle{
+		pos:    rl.NewVector2(float32(simWidth)/2, float32(simHeight)/2),
+		radius: 20,
+		color:  rl.Red,
+	}
+	sim.objects = append(sim.objects, circle)
 }

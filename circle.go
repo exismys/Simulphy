@@ -7,11 +7,11 @@ import (
 type Circle struct {
 	pos, vel, acc rl.Vector2
 	radius        float32
-	col           rl.Color
+	color         rl.Color
 }
 
 func (c *Circle) draw(cameraOffset *rl.Vector2) {
-	rl.DrawCircle(int32(c.pos.X-cameraOffset.X), int32(c.pos.Y-cameraOffset.Y), float32(c.radius), c.col)
+	rl.DrawCircle(int32(c.pos.X-cameraOffset.X), int32(c.pos.Y-cameraOffset.Y), float32(c.radius), c.color)
 }
 
 func (c *Circle) update() {
