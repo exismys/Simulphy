@@ -44,7 +44,7 @@ func NewSimulation() *Simulation {
 	sim.buttons = append(sim.buttons, &Button{
 		Pos:   rl.NewVector2(20, float32(simHeight)+float32(windowHeight-simHeight)/2-25),
 		Size:  rl.NewVector2(100, 50),
-		Label: "Add",
+		Label: "ADD",
 		OnClick: func() {
 			fmt.Println("The Add button was clicked!")
 			sim.inventory.Visible = true
@@ -129,6 +129,11 @@ func (sim *Simulation) setGhostObject(item string) {
 			pos:    rl.GetMousePosition(),
 			radius: 20,
 			color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
+		}
+	} else if item == "NOT" {
+		sim.ghostObject = &NotGate{
+			pos:   rl.GetMousePosition(),
+			color: rl.Color{R: 128, G: 128, B: 128, A: 128},
 		}
 	}
 }
