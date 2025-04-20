@@ -102,8 +102,8 @@ func (sim *Simulation) Render() {
 	rl.ClearBackground(rl.Black)
 
 	// Draw objects
-	for _, c := range sim.objects {
-		c.draw(&sim.cameraOffset)
+	for _, obj := range sim.objects {
+		obj.draw(&sim.cameraOffset)
 	}
 
 	// Draw UI
@@ -131,9 +131,8 @@ func (sim *Simulation) setGhostObject(item string) {
 			color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
 		}
 	} else if item == "NOT" {
-		sim.ghostObject = &NotGate{
-			pos:   rl.GetMousePosition(),
-			color: rl.Color{R: 128, G: 128, B: 128, A: 128},
-		}
+		pos := rl.GetMousePosition()
+		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
+		sim.ghostObject = NewNotGate(pos, color)
 	}
 }
