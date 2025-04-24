@@ -36,7 +36,6 @@ func NewSimulation() *Simulation {
 		func(item string) {
 			fmt.Println("-> Adding object: ", item)
 			sim.setGhostObject(item)
-			// sim.addObject(item)
 		},
 	)
 

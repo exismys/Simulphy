@@ -73,3 +73,8 @@ func (ng *NotGate) setTranslucent(set bool) {
 		ng.outputPort.color.A = 255
 	}
 }
+
+func (ng *NotGate) HandleInput() {
+	ng.inputPort.HandleInput()
+	ng.outputPort.HandleInput()
+}
