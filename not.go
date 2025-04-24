@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -20,11 +22,17 @@ func NewNotGate(position rl.Vector2, color rl.Color) *NotGate {
 		pos:    rl.NewVector2(ng.pos.X-26, ng.pos.Y),
 		radius: 5,
 		color:  rl.SkyBlue,
+		onClick: func() {
+			fmt.Println("Input port of NOT gate clicked!")
+		},
 	}
 	ng.outputPort = &Port{
 		pos:    rl.NewVector2(ng.pos.X+28, ng.pos.Y),
 		radius: 5,
 		color:  rl.Orange,
+		onClick: func() {
+			fmt.Println("Output port of NOT gate clicked")
+		},
 	}
 	ng.inputPort.color.A = 128
 	ng.outputPort.color.A = 128

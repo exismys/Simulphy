@@ -65,3 +65,7 @@ func (c *Circle) setTranslucent(set bool) {
 		c.color.A = 255
 	}
 }
+
+func (c *Circle) HandleInput() {
+
+}

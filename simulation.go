@@ -10,9 +10,9 @@ type SimObject interface {
 	update()
 	draw(cameraOffset *rl.Vector2)
 	isDynamic() bool
-	isClicked() bool
 	setPosition(rl.Vector2)
 	setTranslucent(bool)
+	HandleInput()
 }
 
 type Simulation struct {
@@ -88,6 +88,9 @@ func (sim *Simulation) HandleInput() {
 		btn.HandleInput()
 	}
 	sim.inventory.HandleInput()
+	for _, obj := range sim.objects {
+		obj.HandleInput()
+	}
 }
 
 func (sim *Simulation) Update() {
