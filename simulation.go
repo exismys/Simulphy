@@ -71,10 +71,12 @@ func (sim *Simulation) Run() {
 		}
 
 		if sim.ghostObject != nil && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-			sim.ghostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.cameraOffset))
-			sim.ghostObject.setTranslucent(false)
-			sim.objects = append(sim.objects, sim.ghostObject)
-			sim.ghostObject = nil
+			if _, ok := sim.ghostObject.(*Wire); !ok {
+				sim.ghostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.cameraOffset))
+				sim.ghostObject.setTranslucent(false)
+				sim.objects = append(sim.objects, sim.ghostObject)
+				sim.ghostObject = nil
+			}
 		}
 
 		sim.HandleInput()
@@ -135,6 +137,6 @@ func (sim *Simulation) setGhostObject(item string) {
 	} else if item == "NOT" {
 		pos := rl.GetMousePosition()
 		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
-		sim.ghostObject = NewNotGate(pos, color)
+		sim.ghostObject = NewNotGate(sim, pos, color)
 	}
 }

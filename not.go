@@ -13,7 +13,7 @@ type NotGate struct {
 	outputPort *Port
 }
 
-func NewNotGate(position rl.Vector2, color rl.Color) *NotGate {
+func NewNotGate(sim *Simulation, position rl.Vector2, color rl.Color) *NotGate {
 	ng := &NotGate{
 		pos:   position,
 		color: color,
@@ -22,17 +22,26 @@ func NewNotGate(position rl.Vector2, color rl.Color) *NotGate {
 		pos:    rl.NewVector2(ng.pos.X-26, ng.pos.Y),
 		radius: 5,
 		color:  rl.SkyBlue,
-		onClick: func() {
-			fmt.Println("Input port of NOT gate clicked!")
-		},
 	}
 	ng.outputPort = &Port{
 		pos:    rl.NewVector2(ng.pos.X+28, ng.pos.Y),
 		radius: 5,
 		color:  rl.Orange,
-		onClick: func() {
-			fmt.Println("Output port of NOT gate clicked")
-		},
+	}
+	ng.inputPort.onClick = func() {
+		fmt.Println("Input port of NOT gate clicked!")
+		if sim.ghostObject != nil {
+			sim.objects = append(sim.objects, sim.ghostObject)
+			sim.ghostObject.(*Wire).To = ng.inputPort
+			sim.ghostObject = nil
+		}
+	}
+	ng.outputPort.onClick = func() {
+		fmt.Println("Output port of NOT gate clicked")
+		wire := Wire{
+			From: ng.outputPort,
+		}
+		sim.ghostObject = &wire
 	}
 	ng.inputPort.color.A = 128
 	ng.outputPort.color.A = 128
@@ -57,10 +66,6 @@ func (ng *NotGate) update() {
 }
 
 func (ng *NotGate) isDynamic() bool {
-	return false
-}
-
-func (ng *NotGate) isClicked() bool {
 	return false
 }
 

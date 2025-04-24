@@ -47,13 +47,6 @@ func (c *Circle) isDynamic() bool {
 	return true
 }
 
-func (c *Circle) isClicked() bool {
-	mousePos := rl.GetMousePosition()
-	dx := c.pos.X - mousePos.X
-	dy := c.pos.Y - mousePos.Y
-	return rl.IsMouseButtonPressed(rl.MouseLeftButton) && (dx*dx+dy*dy <= c.radius*c.radius)
-}
-
 func (c *Circle) setPosition(position rl.Vector2) {
 	c.pos = position
 }
