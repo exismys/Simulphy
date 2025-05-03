@@ -72,6 +72,8 @@ func (sim *Simulation) Run() {
 
 		if sim.ghostObject != nil && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 			if _, ok := sim.ghostObject.(*Wire); !ok {
+				// The cameraOffset is added to the mousePosition (the original position) in order to
+				// neutralize the draw method which draws at pos - cameraOffset
 				sim.ghostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.cameraOffset))
 				sim.ghostObject.setTranslucent(false)
 				sim.objects = append(sim.objects, sim.ghostObject)

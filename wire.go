@@ -3,13 +3,15 @@ package main
 import rl "github.com/gen2brain/raylib-go/raylib"
 
 type Wire struct {
-	From  *Port
-	To    *Port
+	From  rl.Vector2
+	To    rl.Vector2
 	color rl.Color
 }
 
 func (w *Wire) draw(cameraOffset *rl.Vector2) {
-	rl.DrawLineV(w.From.pos, w.To.pos, rl.Gray)
+	posFrom := rl.Vector2Subtract(w.From, *cameraOffset)
+	posTo := rl.Vector2Subtract(w.To, *cameraOffset)
+	rl.DrawLineV(posFrom, posTo, rl.Gray)
 }
 
 func (w *Wire) update() {
@@ -20,9 +22,7 @@ func (w *Wire) isDynamic() bool {
 }
 
 func (w *Wire) setPosition(position rl.Vector2) {
-	w.To = &Port{
-		pos: position,
-	}
+	w.To = position
 }
 
 func (w *Wire) setTranslucent(set bool) {
