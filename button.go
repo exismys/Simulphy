@@ -2,31 +2,39 @@ package main
 
 import rl "github.com/gen2brain/raylib-go/raylib"
 
-type TextButton struct {
-	pos    rl.Vector2
-	width  float32
-	height float32
-	text   string
+type Button struct {
+	Pos     rl.Vector2
+	Size    rl.Vector2
+	Label   string
+	OnClick func()
 }
 
-func (b *TextButton) draw() {
-	if b.width == 0 {
-		b.width = 60
+func (b *Button) hovered() bool {
+	mouse := rl.GetMousePosition()
+	rect := rl.Rectangle{
+		X:      b.Pos.X,
+		Y:      b.Pos.Y,
+		Width:  b.Size.X,
+		Height: b.Size.Y,
 	}
-	if b.height == 0 {
-		b.height = 20
-	}
-	rl.DrawRectangleLines(int32(b.pos.X), int32(b.pos.Y), int32(b.width), int32(b.height), rl.LightGray)
-	textWidth := rl.MeasureText(b.text, 10)
-	textX := int32(b.pos.X + (b.width-float32(textWidth))/2)
-	textY := int32(b.pos.Y + 5)
-	rl.DrawText(b.text, textX, textY, 10, rl.LightGray)
+	return rl.CheckCollisionPointRec(mouse, rect)
 }
 
-func (b *TextButton) isClicked() bool {
-	mousePos := rl.GetMousePosition()
-	if rl.IsMouseButtonPressed(rl.MouseLeftButton) && mousePos.X > b.pos.X && mousePos.X < b.pos.X+b.width && mousePos.Y > b.pos.Y && mousePos.Y < b.pos.Y+b.height {
-		return true
+func (b *Button) Draw() {
+	bgColor := rl.DarkGray
+	fgColor := rl.LightGray
+	if b.hovered() {
+		bgColor = rl.LightGray
+		fgColor = rl.DarkGray
 	}
-	return false
+	rl.DrawRectangle(int32(b.Pos.X), int32(b.Pos.Y), int32(b.Size.X), int32(b.Size.Y), bgColor)
+	fontSize := 24
+	labelWidth := rl.MeasureText(b.Label, int32(fontSize))
+	rl.DrawText(b.Label, int32(b.Pos.X+(b.Size.X-float32(labelWidth))/2), int32(b.Pos.Y+(b.Size.Y-float32(fontSize))/2), int32(fontSize), fgColor)
+}
+
+func (b *Button) HandleInput() {
+	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && b.hovered() {
+		b.OnClick()
+	}
 }
