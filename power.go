@@ -46,6 +46,7 @@ func NewPowerSource(sim *Simulation, position rl.Vector2) *Power {
 }
 
 func (p *Power) draw(cameraOffset *rl.Vector2) {
+	p.cameraOffset = *cameraOffset
 	rl.DrawCircleV(rl.Vector2Subtract(p.pos, *cameraOffset), p.radiusOuter, p.colorOuter)
 	stateColor := p.colorInnerFalse
 	if p.state {
