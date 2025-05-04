@@ -1,8 +1,8 @@
 package main
 
 const (
-	simWidth       int32   = 1600
-	simHeight      int32   = 900
+	simWidth       int32   = 800
+	simHeight      int32   = 500
 	windowWidth    int32   = simWidth
 	windowHeight   int32   = simHeight + 80
 	targetFPS      int32   = 60
