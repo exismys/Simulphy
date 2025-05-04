@@ -31,7 +31,7 @@ func NewSimulation() *Simulation {
 	}
 	sim.inventory = *NewInventory(
 		rl.NewVector2(20, 200),
-		[]string{"AND", "NOT", "CIRCLE", "POWER"},
+		[]string{"AND", "NOT", "CIRCLE", "POWER", "LED"},
 		50,
 		func(item string) {
 			fmt.Println("-> Adding object: ", item)
@@ -143,6 +143,10 @@ func (sim *Simulation) setGhostObject(item string) {
 	} else if item == "POWER" {
 		pos := rl.GetMousePosition()
 		sim.ghostObject = NewPowerSource(sim, pos)
+		sim.ghostObject.setTranslucent(true)
+	} else if item == "LED" {
+		pos := rl.GetMousePosition()
+		sim.ghostObject = NewLed(sim, pos)
 		sim.ghostObject.setTranslucent(true)
 	}
 }
