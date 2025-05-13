@@ -85,6 +85,9 @@ func (sim *Simulation) Run() {
 		// sim.Update()
 		sim.Render()
 	}
+	for i, w := range wires {
+		fmt.Printf("Wire %d: %+v", i, w)
+	}
 }
 
 func (sim *Simulation) HandleInput() {

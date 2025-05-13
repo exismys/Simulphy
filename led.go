@@ -34,6 +34,8 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 			w.To = l.inputPort.pos
 			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
 			sim.objects = append(sim.objects, w)
+			wires = append(wires, w)
+			fmt.Println("Number of wires: ", len(wires))
 			sim.ghostObject = nil
 		}
 	}
