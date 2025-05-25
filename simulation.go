@@ -140,6 +140,10 @@ func (sim *Simulation) setGhostObject(item string) {
 		pos := rl.GetMousePosition()
 		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
 		sim.ghostObject = NewNotGate(sim, pos, color)
+	} else if item == "AND" {
+		pos := rl.GetMousePosition()
+		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
+		sim.ghostObject = NewAndGate(sim, pos, color)
 	} else if item == "POWER" {
 		pos := rl.GetMousePosition()
 		sim.ghostObject = NewPowerSource(sim, pos)
