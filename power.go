@@ -30,14 +30,18 @@ func NewPowerSource(sim *Simulation, position rl.Vector2) *Power {
 		colorInnerFalse: rl.Gray,
 	}
 	p.outputPort = &Port{
-		pos:    rl.NewVector2(p.pos.X+p.radiusOuter+6, p.pos.Y),
-		radius: 5,
-		color:  rl.Orange,
+		pos:        rl.NewVector2(p.pos.X+p.radiusOuter+6, p.pos.Y),
+		radius:     5,
+		color:      rl.Orange,
+		state:      p.state,
+		inputPort:  false,
+		inputPorts: []*Port{},
 	}
 	p.outputPort.onClick = func() {
 		fmt.Println("Output port of POWER SOURCE clicked")
 		wire := Wire{
-			From: rl.Vector2Subtract(p.outputPort.pos, sim.cameraOffset),
+			From:     rl.Vector2Subtract(p.outputPort.pos, sim.cameraOffset),
+			FromPort: p.outputPort,
 		}
 		sim.ghostObject = &wire
 	}
@@ -66,6 +70,10 @@ func (p *Power) update() {
 func (p *Power) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		p.state = !p.state
+		p.outputPort.state = p.state
+		if finalPort != nil {
+			calculateState(finalPort)
+		}
 	}
 	p.outputPort.HandleInput()
 }

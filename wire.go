@@ -3,9 +3,11 @@ package main
 import rl "github.com/gen2brain/raylib-go/raylib"
 
 type Wire struct {
-	From  rl.Vector2
-	To    rl.Vector2
-	color rl.Color
+	From     rl.Vector2
+	To       rl.Vector2
+	color    rl.Color
+	FromPort *Port
+	ToPort   *Port
 }
 
 func (w *Wire) draw(cameraOffset *rl.Vector2) {
