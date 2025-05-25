@@ -4,35 +4,42 @@ import "fmt"
 
 var wires []*Wire
 var ports []*Port
+var leds []*Led
 
 var finalPort *Port
 
 func calculateState(p *Port) bool {
 	if p.inputPort {
-		fmt.Println("Resolving state for the current input port")
+		state := p.state
 		for _, fp := range p.fromPorts {
-			p.state = p.state || calculateState(fp)
+			state = state || calculateState(fp)
 		}
-		fmt.Println("Returning state: ", p.state)
-		return p.state
-	} else {
-		if p.resMethod == NOT {
-			fmt.Println("Resolving state with method: ", p.resMethod)
-			for _, ip := range p.inputPorts {
-				p.state = !calculateState(ip)
-			}
-		} else if p.resMethod == OR {
-			for _, ip := range p.inputPorts {
-				p.state = p.state || calculateState(ip)
-			}
-		} else if p.resMethod == AND {
-			p.state = true
-			for _, ip := range p.inputPorts {
-				p.state = p.state && calculateState(ip)
-			}
-		} else {
-			fmt.Println("Not a valid resMethod", p.resMethod)
+		fmt.Println("Returning state: ", state)
+		return state
+	}
+	state := p.state
+	if p.resMethod == NOT {
+		for _, ip := range p.inputPorts {
+			state = !calculateState(ip)
 		}
-		return p.state
+	} else if p.resMethod == OR {
+		state = false
+		for _, ip := range p.inputPorts {
+			state = state || calculateState(ip)
+		}
+	} else if p.resMethod == AND {
+		state = true
+		for _, ip := range p.inputPorts {
+			state = state && calculateState(ip)
+		}
+	} else if p.resMethod == NONE {
+	}
+	fmt.Println("Returning state: ", state)
+	return state
+}
+
+func refreshState() {
+	for _, led := range leds {
+		led.state = calculateState(led.inputPort)
 	}
 }

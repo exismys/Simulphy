@@ -5,7 +5,8 @@ import rl "github.com/gen2brain/raylib-go/raylib"
 type StateResMethod int
 
 const (
-	NOT StateResMethod = iota
+	NONE StateResMethod = iota
+	NOT
 	OR
 	AND
 )

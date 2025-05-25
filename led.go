@@ -29,6 +29,7 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 		color:     rl.SkyBlue,
 		fromPorts: []*Port{},
 	}
+	leds = append(leds, l)
 	l.inputPort.onClick = func() {
 		fmt.Println("Input port of the Led clicked!")
 		if sim.ghostObject != nil {

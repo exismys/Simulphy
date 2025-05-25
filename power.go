@@ -34,6 +34,7 @@ func NewPowerSource(sim *Simulation, position rl.Vector2) *Power {
 		radius:     5,
 		color:      rl.Orange,
 		state:      p.state,
+		resMethod:  NONE,
 		inputPort:  false,
 		inputPorts: []*Port{},
 	}
@@ -71,9 +72,7 @@ func (p *Power) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		p.state = !p.state
 		p.outputPort.state = p.state
-		if finalPort != nil {
-			calculateState(finalPort)
-		}
+		refreshState()
 	}
 	p.outputPort.HandleInput()
 }
