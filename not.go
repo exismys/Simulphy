@@ -19,14 +19,18 @@ func NewNotGate(sim *Simulation, position rl.Vector2, color rl.Color) *NotGate {
 		color: color,
 	}
 	ng.inputPort = &Port{
-		pos:    rl.NewVector2(ng.pos.X-26, ng.pos.Y),
-		radius: 5,
-		color:  rl.SkyBlue,
+		pos:       rl.NewVector2(ng.pos.X-26, ng.pos.Y),
+		radius:    5,
+		color:     rl.SkyBlue,
+		inputPort: true,
+		fromPorts: []*Port{},
 	}
 	ng.outputPort = &Port{
-		pos:    rl.NewVector2(ng.pos.X+28, ng.pos.Y),
-		radius: 5,
-		color:  rl.Orange,
+		pos:        rl.NewVector2(ng.pos.X+28, ng.pos.Y),
+		radius:     5,
+		color:      rl.Orange,
+		inputPorts: []*Port{ng.inputPort},
+		resMethod:  NOT,
 	}
 	ng.inputPort.onClick = func() {
 		fmt.Println("Input port of NOT gate clicked!")
@@ -36,6 +40,7 @@ func NewNotGate(sim *Simulation, position rl.Vector2, color rl.Color) *NotGate {
 			w.ToPort = ng.inputPort
 			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
 			wires = append(wires, w)
+			ng.inputPort.fromPorts = append(ng.inputPort.fromPorts, w.FromPort)
 			fmt.Println("Number of wires: ", len(wires))
 			sim.objects = append(sim.objects, w)
 			sim.ghostObject = nil

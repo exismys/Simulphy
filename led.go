@@ -23,9 +23,11 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 		color:  rl.Gray,
 	}
 	l.inputPort = &Port{
-		pos:    rl.NewVector2(position.X+l.radius+6, position.Y),
-		radius: 5,
-		color:  rl.SkyBlue,
+		pos:       rl.NewVector2(position.X+l.radius+6, position.Y),
+		radius:    5,
+		inputPort: true,
+		color:     rl.SkyBlue,
+		fromPorts: []*Port{},
 	}
 	l.inputPort.onClick = func() {
 		fmt.Println("Input port of the Led clicked!")
@@ -35,6 +37,10 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
 			sim.objects = append(sim.objects, w)
 			wires = append(wires, w)
+			l.inputPort.fromPorts = append(l.inputPort.fromPorts, w.FromPort)
+			finalPort = l.inputPort
+			l.state = calculateState(finalPort)
+			fmt.Println("Led State: ", l.state)
 			fmt.Println("Number of wires: ", len(wires))
 			sim.ghostObject = nil
 		}

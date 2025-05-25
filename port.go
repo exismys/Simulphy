@@ -2,11 +2,24 @@ package main
 
 import rl "github.com/gen2brain/raylib-go/raylib"
 
+type StateResMethod int
+
+const (
+	NOT StateResMethod = iota
+	OR
+	AND
+)
+
 type Port struct {
 	pos          rl.Vector2
 	radius       float32
 	color        rl.Color
 	onClick      func()
+	state        bool
+	inputPort    bool
+	fromPorts    []*Port
+	inputPorts   []*Port
+	resMethod    StateResMethod
 	cameraOffset rl.Vector2
 }
 
