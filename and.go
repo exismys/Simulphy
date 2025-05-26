@@ -41,7 +41,7 @@ func NewAndGate(sim *Simulation, position rl.Vector2, color rl.Color) *AndGate {
 		resMethod:  AND,
 	}
 	ag.inputPortA.onClick = func() {
-		fmt.Println("Input port of NOT gate clicked!")
+		fmt.Println("Input port of AND gate clicked!")
 		if sim.ghostObject != nil {
 			w := sim.ghostObject.(*Wire)
 			w.To = ag.inputPortA.pos
@@ -55,7 +55,7 @@ func NewAndGate(sim *Simulation, position rl.Vector2, color rl.Color) *AndGate {
 		}
 	}
 	ag.inputPortB.onClick = func() {
-		fmt.Println("Input port of NOT gate clicked!")
+		fmt.Println("Input port of AND gate clicked!")
 		if sim.ghostObject != nil {
 			w := sim.ghostObject.(*Wire)
 			w.To = ag.inputPortB.pos
@@ -69,7 +69,7 @@ func NewAndGate(sim *Simulation, position rl.Vector2, color rl.Color) *AndGate {
 		}
 	}
 	ag.outputPort.onClick = func() {
-		fmt.Println("Output port of NOT gate clicked")
+		fmt.Println("Output port of AND gate clicked")
 		wire := Wire{
 			From:     rl.Vector2Subtract(ag.outputPort.pos, sim.cameraOffset),
 			FromPort: ag.outputPort,

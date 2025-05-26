@@ -31,7 +31,7 @@ func NewSimulation() *Simulation {
 	}
 	sim.inventory = *NewInventory(
 		rl.NewVector2(20, 200),
-		[]string{"AND", "NOT", "CIRCLE", "POWER", "LED"},
+		[]string{"AND", "OR", "NOT", "CIRCLE", "POWER", "LED"},
 		50,
 		func(item string) {
 			fmt.Println("-> Adding object: ", item)
@@ -144,6 +144,10 @@ func (sim *Simulation) setGhostObject(item string) {
 		pos := rl.GetMousePosition()
 		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
 		sim.ghostObject = NewAndGate(sim, pos, color)
+	} else if item == "OR" {
+		pos := rl.GetMousePosition()
+		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
+		sim.ghostObject = NewOrGate(sim, pos, color)
 	} else if item == "POWER" {
 		pos := rl.GetMousePosition()
 		sim.ghostObject = NewPowerSource(sim, pos)
