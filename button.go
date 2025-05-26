@@ -27,7 +27,9 @@ func (b *Button) Draw() {
 		bgColor = rl.LightGray
 		fgColor = rl.DarkGray
 	}
-	rl.DrawRectangle(int32(b.Pos.X), int32(b.Pos.Y), int32(b.Size.X), int32(b.Size.Y), bgColor)
+	rect := rl.NewRectangle(b.Pos.X, b.Pos.Y, b.Size.X, b.Size.Y)
+	// rl.DrawRectangle(int32(b.Pos.X), int32(b.Pos.Y), int32(b.Size.X), int32(b.Size.Y), bgColor)
+	rl.DrawRectangleRounded(rect, 10, 32, bgColor)
 	fontSize := 24
 	labelWidth := rl.MeasureText(b.Label, int32(fontSize))
 	rl.DrawText(b.Label, int32(b.Pos.X+(b.Size.X-float32(labelWidth))/2), int32(b.Pos.Y+(b.Size.Y-float32(fontSize))/2), int32(fontSize), fgColor)

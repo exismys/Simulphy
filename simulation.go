@@ -31,7 +31,7 @@ func NewSimulation() *Simulation {
 	}
 	sim.inventory = *NewInventory(
 		rl.NewVector2(20, float32(simHeight)-20),
-		[]string{"AND", "OR", "NOT", "CIRCLE", "POWER", "LED"},
+		[]string{"AND", "CIRCLE", "LED", "NOT", "OR", "POWER"},
 		50,
 		100,
 		func(item string) {
@@ -41,15 +41,21 @@ func NewSimulation() *Simulation {
 	)
 
 	// Initialize button
-	sim.buttons = append(sim.buttons, &Button{
+	button := &Button{
 		Pos:   rl.NewVector2(20, float32(simHeight)+float32(windowHeight-simHeight)/2-25),
 		Size:  rl.NewVector2(100, 50),
 		Label: "ADD",
-		OnClick: func() {
-			fmt.Println("The Add button was clicked!")
-			sim.inventory.Visible = true
-		},
-	})
+	}
+	button.OnClick = func() {
+		fmt.Println("The Add button was clicked!")
+		sim.inventory.Visible = !sim.inventory.Visible
+		if button.Label == "ADD" {
+			button.Label = "X"
+		} else {
+			button.Label = "ADD"
+		}
+	}
+	sim.buttons = append(sim.buttons, button)
 
 	return sim
 }

@@ -45,9 +45,16 @@ func (inv *Inventory) HandleInput() {
 }
 
 func (inv *Inventory) buildButtons() {
-	initPos := inv.Pos
+	// Get the top-left position of the button as inv.Pos.Y is bottom-left
+	initPos := rl.NewVector2(inv.Pos.X, inv.Pos.Y-float32(inv.ItemHeight))
+
+	verticalGap := 10
+	add := -(float32(inv.ItemHeight) + float32(verticalGap))
 	for _, item := range inv.Items {
-		initPos.Y -= float32(inv.ItemHeight)
+		if initPos.Y <= 20 {
+			initPos.X += float32(inv.ItemWidth)
+			initPos.Y = inv.Pos.Y - float32(inv.ItemHeight)
+		}
 		btn := &Button{
 			Pos:   initPos,
 			Size:  rl.NewVector2(float32(inv.ItemWidth), float32(inv.ItemHeight)),
@@ -60,5 +67,6 @@ func (inv *Inventory) buildButtons() {
 			},
 		}
 		inv.buttons = append(inv.buttons, btn)
+		initPos.Y += add
 	}
 }
