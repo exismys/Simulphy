@@ -89,7 +89,8 @@ func (og *OrGate) draw(cameraOffset *rl.Vector2) {
 		rl.NewRectangle(pos.X-20, pos.Y-20, 20, 40),
 		og.color,
 	)
-	rl.DrawCircleSector(rl.NewVector2(pos.X-20, pos.Y), 20, -90, 90, 32, rl.Black)
+	cutColor := rl.NewColor(0, 0, 0, og.color.A)
+	rl.DrawCircleSector(rl.NewVector2(pos.X-20, pos.Y), 20, -90, 90, 32, cutColor)
 	rl.DrawCircleSector(rl.NewVector2(pos.X, pos.Y), 20, -90, 90, 32, og.color)
 
 	og.inputPortA.draw(cameraOffset)
