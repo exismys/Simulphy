@@ -13,15 +13,17 @@ type Inventory struct {
 	buttons    []*Button
 	OnSelect   func(item string)
 	ItemHeight int
+	ItemWidth  int
 }
 
-func NewInventory(pos rl.Vector2, items []string, itemHeight int, onSelect func(item string)) *Inventory {
+func NewInventory(pos rl.Vector2, items []string, itemHeight int, itemWidth int, onSelect func(item string)) *Inventory {
 	inv := &Inventory{
 		Pos:        pos,
 		Visible:    false,
 		Items:      items,
 		OnSelect:   onSelect,
 		ItemHeight: itemHeight,
+		ItemWidth:  itemWidth,
 	}
 	inv.buildButtons()
 	return inv
@@ -45,10 +47,10 @@ func (inv *Inventory) HandleInput() {
 func (inv *Inventory) buildButtons() {
 	initPos := inv.Pos
 	for _, item := range inv.Items {
-		initPos.Y += float32(inv.ItemHeight)
+		initPos.Y -= float32(inv.ItemHeight)
 		btn := &Button{
 			Pos:   initPos,
-			Size:  rl.NewVector2(100, 50),
+			Size:  rl.NewVector2(float32(inv.ItemWidth), float32(inv.ItemHeight)),
 			Label: item,
 			OnClick: func() {
 				fmt.Println("Clicked ", item)

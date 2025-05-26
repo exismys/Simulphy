@@ -30,9 +30,10 @@ func NewSimulation() *Simulation {
 		cameraOffset: rl.NewVector2(0, 0),
 	}
 	sim.inventory = *NewInventory(
-		rl.NewVector2(20, 200),
+		rl.NewVector2(20, float32(simHeight)-20),
 		[]string{"AND", "OR", "NOT", "CIRCLE", "POWER", "LED"},
 		50,
+		100,
 		func(item string) {
 			fmt.Println("-> Adding object: ", item)
 			sim.setGhostObject(item)
