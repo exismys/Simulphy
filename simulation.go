@@ -29,6 +29,8 @@ func NewSimulation() *Simulation {
 		buttons:      make([]*Button, 0),
 		cameraOffset: rl.NewVector2(0, 0),
 	}
+
+	// Initialize inventory
 	sim.inventory = *NewInventory(
 		rl.NewVector2(20, float32(simHeight)-20),
 		[]string{"AND", "CIRCLE", "LED", "NOT", "OR", "POWER"},
@@ -40,22 +42,50 @@ func NewSimulation() *Simulation {
 		},
 	)
 
-	// Initialize button
-	button := &Button{
+	// Initialize ADD button
+	addBtn := &Button{
 		Pos:   rl.NewVector2(20, float32(simHeight)+float32(windowHeight-simHeight)/2-25),
 		Size:  rl.NewVector2(100, 50),
 		Label: "ADD",
 	}
-	button.OnClick = func() {
-		fmt.Println("The Add button was clicked!")
+	addBtn.OnClick = func() {
+		fmt.Println("The ADD button was clicked!")
 		sim.inventory.Visible = !sim.inventory.Visible
-		if button.Label == "ADD" {
-			button.Label = "X"
+		if addBtn.Label == "ADD" {
+			addBtn.Label = "X"
 		} else {
-			button.Label = "ADD"
+			addBtn.Label = "ADD"
 		}
 	}
-	sim.buttons = append(sim.buttons, button)
+	sim.buttons = append(sim.buttons, addBtn)
+
+	// Initialize LOAD Button
+	loadBtn := &Button{
+		Pos:   rl.NewVector2(20+100+20, float32(simHeight)+float32(windowHeight-simHeight)/2-25),
+		Size:  rl.NewVector2(100, 50),
+		Label: "LOAD",
+	}
+	loadBtn.OnClick = func() {
+		fmt.Println("The LOAD button was clicked!")
+		if loadBtn.Label == "LOAD" {
+			loadBtn.Label = "X"
+		} else {
+			loadBtn.Label = "LOAD"
+		}
+	}
+	sim.buttons = append(sim.buttons, loadBtn)
+
+	// Initialize SAVE Button
+	saveBtn := &Button{
+		Pos:   rl.NewVector2(20+100+20+100+20, float32(simHeight)+float32(windowHeight-simHeight)/2-25),
+		Size:  rl.NewVector2(100, 50),
+		Label: "SAVE",
+	}
+	saveBtn.OnClick = func() {
+		fmt.Println("The SAVE button was clicked!")
+		serialize(sim)
+	}
+	sim.buttons = append(sim.buttons, saveBtn)
 
 	return sim
 }
