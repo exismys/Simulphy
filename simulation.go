@@ -16,22 +16,22 @@ type SimObject interface {
 }
 
 type Simulation struct {
-	objects      []SimObject
-	ghostObject  SimObject
-	buttons      []*Button
-	inventory    Inventory
-	cameraOffset rl.Vector2
+	Objects      []SimObject
+	GhostObject  SimObject
+	Buttons      []*Button
+	Inventory    Inventory
+	CameraOffset rl.Vector2
 }
 
 func NewSimulation() *Simulation {
 	sim := &Simulation{
-		objects:      make([]SimObject, 0),
-		buttons:      make([]*Button, 0),
-		cameraOffset: rl.NewVector2(0, 0),
+		Objects:      make([]SimObject, 0),
+		Buttons:      make([]*Button, 0),
+		CameraOffset: rl.NewVector2(0, 0),
 	}
 
 	// Initialize inventory
-	sim.inventory = *NewInventory(
+	sim.Inventory = *NewInventory(
 		rl.NewVector2(20, float32(simHeight)-20),
 		[]string{"AND", "CIRCLE", "LED", "NOT", "OR", "POWER"},
 		50,
@@ -50,14 +50,14 @@ func NewSimulation() *Simulation {
 	}
 	addBtn.OnClick = func() {
 		fmt.Println("The ADD button was clicked!")
-		sim.inventory.Visible = !sim.inventory.Visible
+		sim.Inventory.Visible = !sim.Inventory.Visible
 		if addBtn.Label == "ADD" {
 			addBtn.Label = "X"
 		} else {
 			addBtn.Label = "ADD"
 		}
 	}
-	sim.buttons = append(sim.buttons, addBtn)
+	sim.Buttons = append(sim.Buttons, addBtn)
 
 	// Initialize LOAD Button
 	loadBtn := &Button{
@@ -73,7 +73,7 @@ func NewSimulation() *Simulation {
 			loadBtn.Label = "LOAD"
 		}
 	}
-	sim.buttons = append(sim.buttons, loadBtn)
+	sim.Buttons = append(sim.Buttons, loadBtn)
 
 	// Initialize SAVE Button
 	saveBtn := &Button{
@@ -85,7 +85,7 @@ func NewSimulation() *Simulation {
 		fmt.Println("The SAVE button was clicked!")
 		serialize(sim)
 	}
-	sim.buttons = append(sim.buttons, saveBtn)
+	sim.Buttons = append(sim.Buttons, saveBtn)
 
 	return sim
 }
@@ -100,21 +100,21 @@ func (sim *Simulation) Run() {
 		}
 		if isDragging {
 			mouseDelta := rl.Vector2Subtract(dragStart, rl.GetMousePosition())
-			sim.cameraOffset = rl.Vector2Add(sim.cameraOffset, mouseDelta)
+			sim.CameraOffset = rl.Vector2Add(sim.CameraOffset, mouseDelta)
 			dragStart = rl.GetMousePosition()
 		}
 		if rl.IsMouseButtonReleased(rl.MouseButtonRight) {
 			isDragging = false
 		}
 
-		if sim.ghostObject != nil && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-			if _, ok := sim.ghostObject.(*Wire); !ok {
+		if sim.GhostObject != nil && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+			if _, ok := sim.GhostObject.(*Wire); !ok {
 				// The cameraOffset is added to the mousePosition (the original position) in order to
 				// neutralize the draw method which draws at pos - cameraOffset
-				sim.ghostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.cameraOffset))
-				sim.ghostObject.setTranslucent(false)
-				sim.objects = append(sim.objects, sim.ghostObject)
-				sim.ghostObject = nil
+				sim.GhostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.CameraOffset))
+				sim.GhostObject.setTranslucent(false)
+				sim.Objects = append(sim.Objects, sim.GhostObject)
+				sim.GhostObject = nil
 			}
 		}
 
@@ -125,17 +125,17 @@ func (sim *Simulation) Run() {
 }
 
 func (sim *Simulation) HandleInput() {
-	for _, btn := range sim.buttons {
+	for _, btn := range sim.Buttons {
 		btn.HandleInput()
 	}
-	sim.inventory.HandleInput()
-	for _, obj := range sim.objects {
+	sim.Inventory.HandleInput()
+	for _, obj := range sim.Objects {
 		obj.HandleInput()
 	}
 }
 
 func (sim *Simulation) Update() {
-	for _, obj := range sim.objects {
+	for _, obj := range sim.Objects {
 		obj.update()
 	}
 }
@@ -145,22 +145,22 @@ func (sim *Simulation) Render() {
 	rl.ClearBackground(rl.Black)
 
 	// Draw objects
-	for _, obj := range sim.objects {
-		obj.draw(&sim.cameraOffset)
+	for _, obj := range sim.Objects {
+		obj.draw(&sim.CameraOffset)
 	}
 
 	// Draw UI
 	rl.DrawLine(0, simHeight, windowWidth, simHeight, rl.Gray)
-	for _, btn := range sim.buttons {
+	for _, btn := range sim.Buttons {
 		btn.Draw()
 	}
-	sim.inventory.Draw()
+	sim.Inventory.Draw()
 
 	// Draw ghost object
-	if sim.ghostObject != nil {
-		sim.ghostObject.setPosition(rl.GetMousePosition())
+	if sim.GhostObject != nil {
+		sim.GhostObject.setPosition(rl.GetMousePosition())
 		cameraOffset := rl.NewVector2(0, 0)
-		sim.ghostObject.draw(&cameraOffset)
+		sim.GhostObject.draw(&cameraOffset)
 	}
 
 	rl.EndDrawing()
@@ -168,30 +168,30 @@ func (sim *Simulation) Render() {
 
 func (sim *Simulation) setGhostObject(item string) {
 	if item == "CIRCLE" {
-		sim.ghostObject = &Circle{
-			pos:    rl.GetMousePosition(),
-			radius: 20,
-			color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
+		sim.GhostObject = &Circle{
+			Pos:    rl.GetMousePosition(),
+			Radius: 20,
+			Color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
 		}
 	} else if item == "NOT" {
 		pos := rl.GetMousePosition()
 		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
-		sim.ghostObject = NewNotGate(sim, pos, color)
+		sim.GhostObject = NewNotGate(sim, pos, color)
 	} else if item == "AND" {
 		pos := rl.GetMousePosition()
 		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
-		sim.ghostObject = NewAndGate(sim, pos, color)
+		sim.GhostObject = NewAndGate(sim, pos, color)
 	} else if item == "OR" {
 		pos := rl.GetMousePosition()
 		color := rl.Color{R: 128, G: 128, B: 128, A: 128}
-		sim.ghostObject = NewOrGate(sim, pos, color)
+		sim.GhostObject = NewOrGate(sim, pos, color)
 	} else if item == "POWER" {
 		pos := rl.GetMousePosition()
-		sim.ghostObject = NewPowerSource(sim, pos)
-		sim.ghostObject.setTranslucent(true)
+		sim.GhostObject = NewPowerSource(sim, pos)
+		sim.GhostObject.setTranslucent(true)
 	} else if item == "LED" {
 		pos := rl.GetMousePosition()
-		sim.ghostObject = NewLed(sim, pos)
-		sim.ghostObject.setTranslucent(true)
+		sim.GhostObject = NewLed(sim, pos)
+		sim.GhostObject.setTranslucent(true)
 	}
 }

@@ -5,41 +5,41 @@ import (
 )
 
 type Circle struct {
-	pos, vel, acc rl.Vector2
-	radius        float32
-	color         rl.Color
+	Pos, Vel, Acc rl.Vector2
+	Radius        float32
+	Color         rl.Color
 }
 
 func (c *Circle) draw(cameraOffset *rl.Vector2) {
-	rl.DrawCircle(int32(c.pos.X-cameraOffset.X), int32(c.pos.Y-cameraOffset.Y), float32(c.radius), c.color)
+	rl.DrawCircle(int32(c.Pos.X-cameraOffset.X), int32(c.Pos.Y-cameraOffset.Y), float32(c.Radius), c.Color)
 }
 
 func (c *Circle) update() {
 	deltaTime := fixedDeltaTime
 
-	// Calculate velocity
-	c.vel.X += c.acc.X * deltaTime
-	c.vel.Y += c.acc.Y * deltaTime
+	// Calculate Velocity
+	c.Vel.X += c.Acc.X * deltaTime
+	c.Vel.Y += c.Acc.Y * deltaTime
 
-	// Calculate position
-	c.pos.X += c.vel.X * deltaTime
-	c.pos.Y += c.vel.Y * deltaTime
+	// Calculate Position
+	c.Pos.X += c.Vel.X * deltaTime
+	c.Pos.Y += c.Vel.Y * deltaTime
 
 	// Handle Collision
-	if c.pos.X-c.radius < 0 {
-		c.pos.X = 0 + c.radius
-		c.vel.X *= -1 * dampingFactor
-	} else if c.pos.X+c.radius > float32(simWidth) {
-		c.pos.X = float32(simWidth) - c.radius
-		c.vel.X *= -1 * dampingFactor
+	if c.Pos.X-c.Radius < 0 {
+		c.Pos.X = 0 + c.Radius
+		c.Vel.X *= -1 * dampingFactor
+	} else if c.Pos.X+c.Radius > float32(simWidth) {
+		c.Pos.X = float32(simWidth) - c.Radius
+		c.Vel.X *= -1 * dampingFactor
 	}
 
-	if c.pos.Y-c.radius < 0 {
-		c.pos.Y = 0 + c.radius
-		c.vel.Y *= -1 * dampingFactor
-	} else if c.pos.Y+c.radius > float32(simHeight) {
-		c.pos.Y = float32(simHeight) - c.radius
-		c.vel.Y *= -1 * dampingFactor
+	if c.Pos.Y-c.Radius < 0 {
+		c.Pos.Y = 0 + c.Radius
+		c.Vel.Y *= -1 * dampingFactor
+	} else if c.Pos.Y+c.Radius > float32(simHeight) {
+		c.Pos.Y = float32(simHeight) - c.Radius
+		c.Vel.Y *= -1 * dampingFactor
 	}
 }
 
@@ -47,15 +47,15 @@ func (c *Circle) isDynamic() bool {
 	return true
 }
 
-func (c *Circle) setPosition(position rl.Vector2) {
-	c.pos = position
+func (c *Circle) setPosition(Position rl.Vector2) {
+	c.Pos = Position
 }
 
 func (c *Circle) setTranslucent(set bool) {
 	if set {
-		c.color.A = 128
+		c.Color.A = 128
 	} else {
-		c.color.A = 255
+		c.Color.A = 255
 	}
 }
 

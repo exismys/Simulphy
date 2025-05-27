@@ -12,34 +12,34 @@ const (
 )
 
 type Port struct {
-	pos          rl.Vector2
-	radius       float32
-	color        rl.Color
-	onClick      func()
-	state        bool
-	inputPort    bool
-	fromPorts    []*Port
-	inputPorts   []*Port
-	resMethod    StateResMethod
-	cameraOffset rl.Vector2
+	Pos          rl.Vector2
+	Radius       float32
+	Color        rl.Color
+	OnClick      func()
+	State        bool
+	IsInputPort  bool
+	FromPorts    []*Port
+	InputPorts   []*Port
+	ResMethod    StateResMethod
+	CameraOffset rl.Vector2
 }
 
 func (p *Port) draw(cameraOffset *rl.Vector2) {
-	p.cameraOffset = *cameraOffset
-	radius := p.radius
+	p.CameraOffset = *cameraOffset
+	radius := p.Radius
 	if p.hovered() {
 		radius += 2
 	}
-	rl.DrawCircleV(rl.Vector2Subtract(p.pos, *cameraOffset), radius, p.color)
+	rl.DrawCircleV(rl.Vector2Subtract(p.Pos, *cameraOffset), radius, p.Color)
 }
 
 func (p *Port) hovered() bool {
 	mouse := rl.GetMousePosition()
-	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(p.pos, p.cameraOffset), p.radius)
+	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(p.Pos, p.CameraOffset), p.Radius)
 }
 
 func (p *Port) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-		p.onClick()
+		p.OnClick()
 	}
 }

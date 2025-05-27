@@ -7,70 +7,70 @@ import (
 )
 
 type NotGate struct {
-	pos        rl.Vector2
-	color      rl.Color
-	inputPort  *Port
-	outputPort *Port
+	Pos        rl.Vector2
+	Color      rl.Color
+	InputPort  *Port
+	OutputPort *Port
 }
 
-func NewNotGate(sim *Simulation, position rl.Vector2, color rl.Color) *NotGate {
+func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 	ng := &NotGate{
-		pos:   position,
-		color: color,
+		Pos:   Position,
+		Color: Color,
 	}
-	ng.inputPort = &Port{
-		pos:       rl.NewVector2(ng.pos.X-26, ng.pos.Y),
-		radius:    5,
-		color:     rl.SkyBlue,
-		inputPort: true,
-		fromPorts: []*Port{},
+	ng.InputPort = &Port{
+		Pos:         rl.NewVector2(ng.Pos.X-26, ng.Pos.Y),
+		Radius:      5,
+		Color:       rl.SkyBlue,
+		IsInputPort: true,
+		FromPorts:   []*Port{},
 	}
-	ng.outputPort = &Port{
-		pos:        rl.NewVector2(ng.pos.X+28, ng.pos.Y),
-		radius:     5,
-		color:      rl.Orange,
-		inputPorts: []*Port{ng.inputPort},
-		resMethod:  NOT,
+	ng.OutputPort = &Port{
+		Pos:        rl.NewVector2(ng.Pos.X+28, ng.Pos.Y),
+		Radius:     5,
+		Color:      rl.Orange,
+		InputPorts: []*Port{ng.InputPort},
+		ResMethod:  NOT,
 	}
-	ng.inputPort.onClick = func() {
+	ng.InputPort.OnClick = func() {
 		fmt.Println("Input port of NOT gate clicked!")
-		if sim.ghostObject != nil {
-			w := sim.ghostObject.(*Wire)
-			w.To = ng.inputPort.pos
-			w.ToPort = ng.inputPort
-			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
+		if sim.GhostObject != nil {
+			w := sim.GhostObject.(*Wire)
+			w.To = ng.InputPort.Pos
+			w.ToPort = ng.InputPort
+			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			wires = append(wires, w)
-			ng.inputPort.fromPorts = append(ng.inputPort.fromPorts, w.FromPort)
+			ng.InputPort.FromPorts = append(ng.InputPort.FromPorts, w.FromPort)
 			fmt.Println("Number of wires: ", len(wires))
-			sim.objects = append(sim.objects, w)
-			sim.ghostObject = nil
+			sim.Objects = append(sim.Objects, w)
+			sim.GhostObject = nil
 		}
 	}
-	ng.outputPort.onClick = func() {
+	ng.OutputPort.OnClick = func() {
 		fmt.Println("Output port of NOT gate clicked")
 		wire := Wire{
-			From:     rl.Vector2Subtract(ng.outputPort.pos, sim.cameraOffset),
-			FromPort: ng.outputPort,
+			From:     rl.Vector2Subtract(ng.OutputPort.Pos, sim.CameraOffset),
+			FromPort: ng.OutputPort,
 		}
-		sim.ghostObject = &wire
+		sim.GhostObject = &wire
 	}
-	ng.inputPort.color.A = 128
-	ng.outputPort.color.A = 128
+	ng.InputPort.Color.A = 128
+	ng.OutputPort.Color.A = 128
 	return ng
 }
 
-func (ng *NotGate) draw(cameraOffset *rl.Vector2) {
-	pos := rl.Vector2Subtract(ng.pos, *cameraOffset)
+func (ng *NotGate) draw(CameraOffset *rl.Vector2) {
+	Pos := rl.Vector2Subtract(ng.Pos, *CameraOffset)
 
-	p1 := rl.NewVector2(pos.X-20, pos.Y-20)
-	p2 := rl.NewVector2(pos.X-20, pos.Y+20)
-	p3 := rl.NewVector2(pos.X+10, pos.Y)
+	p1 := rl.NewVector2(Pos.X-20, Pos.Y-20)
+	p2 := rl.NewVector2(Pos.X-20, Pos.Y+20)
+	p3 := rl.NewVector2(Pos.X+10, Pos.Y)
 
-	rl.DrawTriangle(p1, p2, p3, ng.color)
-	rl.DrawCircle(int32(pos.X+16), int32(pos.Y), 6, ng.color)
+	rl.DrawTriangle(p1, p2, p3, ng.Color)
+	rl.DrawCircle(int32(Pos.X+16), int32(Pos.Y), 6, ng.Color)
 
-	ng.inputPort.draw(cameraOffset)
-	ng.outputPort.draw(cameraOffset)
+	ng.InputPort.draw(CameraOffset)
+	ng.OutputPort.draw(CameraOffset)
 }
 
 func (ng *NotGate) update() {
@@ -80,25 +80,25 @@ func (ng *NotGate) isDynamic() bool {
 	return false
 }
 
-func (ng *NotGate) setPosition(position rl.Vector2) {
-	ng.pos = position
-	ng.inputPort.pos = rl.NewVector2(position.X-26, position.Y)
-	ng.outputPort.pos = rl.NewVector2(position.X+28, position.Y)
+func (ng *NotGate) setPosition(Position rl.Vector2) {
+	ng.Pos = Position
+	ng.InputPort.Pos = rl.NewVector2(Position.X-26, Position.Y)
+	ng.OutputPort.Pos = rl.NewVector2(Position.X+28, Position.Y)
 }
 
 func (ng *NotGate) setTranslucent(set bool) {
 	if set {
-		ng.color.A = 128
-		ng.inputPort.color.A = 128
-		ng.outputPort.color.A = 128
+		ng.Color.A = 128
+		ng.InputPort.Color.A = 128
+		ng.OutputPort.Color.A = 128
 	} else {
-		ng.color.A = 255
-		ng.inputPort.color.A = 255
-		ng.outputPort.color.A = 255
+		ng.Color.A = 255
+		ng.InputPort.Color.A = 255
+		ng.OutputPort.Color.A = 255
 	}
 }
 
 func (ng *NotGate) HandleInput() {
-	ng.inputPort.HandleInput()
-	ng.outputPort.HandleInput()
+	ng.InputPort.HandleInput()
+	ng.OutputPort.HandleInput()
 }
