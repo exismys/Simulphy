@@ -7,7 +7,7 @@ import (
 )
 
 type SimState struct {
-	Sim   *Simulation
+	// Sim   *Simulation
 	Wires []*Wire
 	Ports []*Port
 	Leds  []*Led
@@ -15,7 +15,7 @@ type SimState struct {
 
 func serialize(sim *Simulation) {
 	simState := &SimState{
-		Sim:   sim,
+		// Sim:   sim,
 		Wires: wires,
 		Ports: ports,
 		Leds:  leds,
@@ -26,4 +26,27 @@ func serialize(sim *Simulation) {
 		fmt.Println(error)
 	}
 	os.WriteFile("circuit.sim.json", s, 0644)
+}
+
+func deserialize(sim *Simulation) {
+	data, err := os.ReadFile("circuit.sim.json")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	simState := &SimState{}
+	err = json.Unmarshal(data, simState)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	ports = simState.Ports
+	wires = simState.Wires
+	leds = simState.Leds
+
+	for _, led := range leds {
+		sim.Objects = append(sim.Objects, led)
+	}
 }

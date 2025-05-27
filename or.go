@@ -11,7 +11,7 @@ type OrGate struct {
 	Color      rl.Color
 	InputPortA *Port
 	InputPortB *Port
-	outputPort *Port
+	OutputPort *Port
 }
 
 func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
@@ -33,7 +33,7 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 		IsInputPort: true,
 		FromPorts:   []*Port{},
 	}
-	og.outputPort = &Port{
+	og.OutputPort = &Port{
 		Pos:        rl.NewVector2(og.Pos.X+26, og.Pos.Y),
 		Radius:     5,
 		Color:      rl.Orange,
@@ -68,17 +68,17 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 			sim.GhostObject = nil
 		}
 	}
-	og.outputPort.onClick = func() {
+	og.OutputPort.onClick = func() {
 		fmt.Println("Output port of OR gate clicked")
 		wire := Wire{
-			From:     rl.Vector2Subtract(og.outputPort.Pos, sim.CameraOffset),
-			FromPort: og.outputPort,
+			From:     rl.Vector2Subtract(og.OutputPort.Pos, sim.CameraOffset),
+			FromPort: og.OutputPort,
 		}
 		sim.GhostObject = &wire
 	}
 	og.InputPortA.Color.A = 128
 	og.InputPortB.Color.A = 128
-	og.outputPort.Color.A = 128
+	og.OutputPort.Color.A = 128
 	return og
 }
 
@@ -95,7 +95,7 @@ func (og *OrGate) draw(CameraOffset *rl.Vector2) {
 
 	og.InputPortA.draw(CameraOffset)
 	og.InputPortB.draw(CameraOffset)
-	og.outputPort.draw(CameraOffset)
+	og.OutputPort.draw(CameraOffset)
 }
 
 func (og *OrGate) update() {
@@ -109,7 +109,7 @@ func (og *OrGate) setPosition(Position rl.Vector2) {
 	og.Pos = Position
 	og.InputPortA.Pos = rl.NewVector2(Position.X-26, Position.Y-10)
 	og.InputPortB.Pos = rl.NewVector2(Position.X-26, Position.Y+10)
-	og.outputPort.Pos = rl.NewVector2(Position.X+26, Position.Y)
+	og.OutputPort.Pos = rl.NewVector2(Position.X+26, Position.Y)
 }
 
 func (og *OrGate) setTranslucent(set bool) {
@@ -117,17 +117,17 @@ func (og *OrGate) setTranslucent(set bool) {
 		og.Color.A = 128
 		og.InputPortA.Color.A = 128
 		og.InputPortB.Color.A = 128
-		og.outputPort.Color.A = 128
+		og.OutputPort.Color.A = 128
 	} else {
 		og.Color.A = 255
 		og.InputPortA.Color.A = 255
 		og.InputPortB.Color.A = 255
-		og.outputPort.Color.A = 255
+		og.OutputPort.Color.A = 255
 	}
 }
 
 func (og *OrGate) HandleInput() {
 	og.InputPortA.HandleInput()
 	og.InputPortB.HandleInput()
-	og.outputPort.HandleInput()
+	og.OutputPort.HandleInput()
 }

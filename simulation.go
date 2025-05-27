@@ -67,6 +67,7 @@ func NewSimulation() *Simulation {
 	}
 	loadBtn.onClick = func() {
 		fmt.Println("The LOAD button was clicked!")
+		deserialize(sim)
 		if loadBtn.Label == "LOAD" {
 			loadBtn.Label = "X"
 		} else {
