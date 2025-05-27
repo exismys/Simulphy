@@ -11,7 +11,7 @@ type Inventory struct {
 	Visible    bool
 	Items      []string
 	buttons    []*Button
-	OnSelect   func(item string)
+	onSelect   func(item string)
 	ItemHeight int
 	ItemWidth  int
 }
@@ -21,7 +21,7 @@ func NewInventory(pos rl.Vector2, items []string, itemHeight int, itemWidth int,
 		Pos:        pos,
 		Visible:    false,
 		Items:      items,
-		OnSelect:   onSelect,
+		onSelect:   onSelect,
 		ItemHeight: itemHeight,
 		ItemWidth:  itemWidth,
 	}
@@ -59,10 +59,10 @@ func (inv *Inventory) buildButtons() {
 			Pos:   initPos,
 			Size:  rl.NewVector2(float32(inv.ItemWidth), float32(inv.ItemHeight)),
 			Label: item,
-			OnClick: func() {
+			onClick: func() {
 				fmt.Println("Clicked ", item)
-				if inv.OnSelect != nil {
-					inv.OnSelect(item)
+				if inv.onSelect != nil {
+					inv.onSelect(item)
 				}
 			},
 		}

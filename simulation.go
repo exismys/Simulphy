@@ -48,7 +48,7 @@ func NewSimulation() *Simulation {
 		Size:  rl.NewVector2(100, 50),
 		Label: "ADD",
 	}
-	addBtn.OnClick = func() {
+	addBtn.onClick = func() {
 		fmt.Println("The ADD button was clicked!")
 		sim.Inventory.Visible = !sim.Inventory.Visible
 		if addBtn.Label == "ADD" {
@@ -65,7 +65,7 @@ func NewSimulation() *Simulation {
 		Size:  rl.NewVector2(100, 50),
 		Label: "LOAD",
 	}
-	loadBtn.OnClick = func() {
+	loadBtn.onClick = func() {
 		fmt.Println("The LOAD button was clicked!")
 		if loadBtn.Label == "LOAD" {
 			loadBtn.Label = "X"
@@ -81,7 +81,7 @@ func NewSimulation() *Simulation {
 		Size:  rl.NewVector2(100, 50),
 		Label: "SAVE",
 	}
-	saveBtn.OnClick = func() {
+	saveBtn.onClick = func() {
 		fmt.Println("The SAVE button was clicked!")
 		serialize(sim)
 	}

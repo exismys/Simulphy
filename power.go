@@ -38,7 +38,7 @@ func NewPowerSource(sim *Simulation, Position rl.Vector2) *Power {
 		IsInputPort: false,
 		InputPorts:  []*Port{},
 	}
-	p.OutputPort.OnClick = func() {
+	p.OutputPort.onClick = func() {
 		fmt.Println("Output port of POWER SOURCE clicked")
 		wire := Wire{
 			From:     rl.Vector2Subtract(p.OutputPort.Pos, sim.CameraOffset),

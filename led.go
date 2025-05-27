@@ -30,7 +30,7 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 		FromPorts:   []*Port{},
 	}
 	leds = append(leds, l)
-	l.InputPort.OnClick = func() {
+	l.InputPort.onClick = func() {
 		fmt.Println("Input port of the Led clicked!")
 		if sim.GhostObject != nil {
 			w := sim.GhostObject.(*Wire)

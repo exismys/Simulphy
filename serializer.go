@@ -25,5 +25,5 @@ func serialize(sim *Simulation) {
 	if error != nil {
 		fmt.Println(error)
 	}
-	os.WriteFile("~/circuit.sim.json", s, 0644)
+	os.WriteFile("circuit.sim.json", s, 0644)
 }

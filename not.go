@@ -32,7 +32,7 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 		InputPorts: []*Port{ng.InputPort},
 		ResMethod:  NOT,
 	}
-	ng.InputPort.OnClick = func() {
+	ng.InputPort.onClick = func() {
 		fmt.Println("Input port of NOT gate clicked!")
 		if sim.GhostObject != nil {
 			w := sim.GhostObject.(*Wire)
@@ -46,7 +46,7 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 			sim.GhostObject = nil
 		}
 	}
-	ng.OutputPort.OnClick = func() {
+	ng.OutputPort.onClick = func() {
 		fmt.Println("Output port of NOT gate clicked")
 		wire := Wire{
 			From:     rl.Vector2Subtract(ng.OutputPort.Pos, sim.CameraOffset),

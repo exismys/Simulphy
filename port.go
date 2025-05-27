@@ -15,7 +15,7 @@ type Port struct {
 	Pos          rl.Vector2
 	Radius       float32
 	Color        rl.Color
-	OnClick      func()
+	onClick      func()
 	State        bool
 	IsInputPort  bool
 	FromPorts    []*Port
@@ -40,6 +40,6 @@ func (p *Port) hovered() bool {
 
 func (p *Port) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-		p.OnClick()
+		p.onClick()
 	}
 }
