@@ -2,12 +2,6 @@ package main
 
 import "fmt"
 
-var wires []*Wire
-var ports []*Port
-var leds []*Led
-
-var finalPort *Port
-
 func calculateState(p *Port) bool {
 	if p.IsInputPort {
 		state := p.State

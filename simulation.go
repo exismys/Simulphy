@@ -84,7 +84,7 @@ func NewSimulation() *Simulation {
 	}
 	saveBtn.onClick = func() {
 		fmt.Println("The SAVE button was clicked!")
-		serialize(sim)
+		serialize()
 	}
 	sim.Buttons = append(sim.Buttons, saveBtn)
 
@@ -115,6 +115,22 @@ func (sim *Simulation) Run() {
 				sim.GhostObject.setPosition(rl.Vector2Add(rl.GetMousePosition(), sim.CameraOffset))
 				sim.GhostObject.setTranslucent(false)
 				sim.Objects = append(sim.Objects, sim.GhostObject)
+			}
+
+			// Append objects into their own concrete type array
+			if ng, ok := sim.GhostObject.(*NotGate); ok {
+				notGates = append(notGates, ng)
+			} else if og, ok := sim.GhostObject.(*OrGate); ok {
+				orGates = append(orGates, og)
+			} else if ag, ok := sim.GhostObject.(*AndGate); ok {
+				andGates = append(andGates, ag)
+			} else if l, ok := sim.GhostObject.(*Led); ok {
+				leds = append(leds, l)
+			} else if p, ok := sim.GhostObject.(*Power); ok {
+				powers = append(powers, p)
+			}
+
+			if _, ok := sim.GhostObject.(*Wire); !ok {
 				sim.GhostObject = nil
 			}
 		}
