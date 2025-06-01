@@ -21,7 +21,16 @@ var (
 	andGates []*AndGate
 	circles  []*Circle
 	powers   []*Power
-
-	// This represents the "last clicked" input port of LED
-	finalPort *Port
 )
+
+// This represents the "last clicked" input port of LED
+var finalPort *Port
+
+// This gets incremented everytime a new port is created
+// This should be access by calling getNewPortId
+var portId int32 = -1
+
+func getNewPortId() int32 {
+	portId += 1
+	return portId
+}

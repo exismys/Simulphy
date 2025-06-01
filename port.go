@@ -12,6 +12,7 @@ const (
 )
 
 type Port struct {
+	Id           int32
 	Pos          rl.Vector2
 	Radius       float32
 	Color        rl.Color

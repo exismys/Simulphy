@@ -19,6 +19,7 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 		Color: Color,
 	}
 	ng.InputPort = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(ng.Pos.X-26, ng.Pos.Y),
 		Radius:      5,
 		Color:       rl.SkyBlue,
@@ -26,6 +27,7 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 		FromPorts:   []*Port{},
 	}
 	ng.OutputPort = &Port{
+		Id:         getNewPortId(),
 		Pos:        rl.NewVector2(ng.Pos.X+28, ng.Pos.Y),
 		Radius:     5,
 		Color:      rl.Orange,

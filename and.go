@@ -20,6 +20,7 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 		Color: Color,
 	}
 	ag.InputPortA = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(ag.Pos.X-26, ag.Pos.Y-10),
 		Radius:      5,
 		Color:       rl.SkyBlue,
@@ -27,6 +28,7 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 		FromPorts:   []*Port{},
 	}
 	ag.InputPortB = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(ag.Pos.X-26, ag.Pos.Y+10),
 		Radius:      5,
 		Color:       rl.SkyBlue,
@@ -34,6 +36,7 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 		FromPorts:   []*Port{},
 	}
 	ag.OutputPort = &Port{
+		Id:         getNewPortId(),
 		Pos:        rl.NewVector2(ag.Pos.X+26, ag.Pos.Y),
 		Radius:     5,
 		Color:      rl.Orange,

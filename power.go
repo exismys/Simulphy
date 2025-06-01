@@ -30,6 +30,7 @@ func NewPowerSource(sim *Simulation, Position rl.Vector2) *Power {
 		ColorInnerFalse: rl.Gray,
 	}
 	p.OutputPort = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(p.Pos.X+p.RadiusOuter+6, p.Pos.Y),
 		Radius:      5,
 		Color:       rl.Orange,

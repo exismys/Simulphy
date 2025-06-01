@@ -23,6 +23,7 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 		Color:  rl.Gray,
 	}
 	l.InputPort = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(position.X+l.Radius+6, position.Y),
 		Radius:      5,
 		IsInputPort: true,

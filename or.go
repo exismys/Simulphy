@@ -20,6 +20,7 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 		Color: Color,
 	}
 	og.InputPortA = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(og.Pos.X-26, og.Pos.Y-10),
 		Radius:      5,
 		Color:       rl.SkyBlue,
@@ -27,6 +28,7 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 		FromPorts:   []*Port{},
 	}
 	og.InputPortB = &Port{
+		Id:          getNewPortId(),
 		Pos:         rl.NewVector2(og.Pos.X-26, og.Pos.Y+10),
 		Radius:      5,
 		Color:       rl.SkyBlue,
@@ -34,6 +36,7 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 		FromPorts:   []*Port{},
 	}
 	og.OutputPort = &Port{
+		Id:         getNewPortId(),
 		Pos:        rl.NewVector2(og.Pos.X+26, og.Pos.Y),
 		Radius:     5,
 		Color:      rl.Orange,
