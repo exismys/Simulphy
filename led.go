@@ -13,7 +13,7 @@ type Led struct {
 	State        bool
 	InputPort    *Port
 	InputPortId  int32
-	CameraOffset *rl.Vector2
+	CameraOffset rl.Vector2
 }
 
 func NewLed(sim *Simulation, position rl.Vector2) *Led {
@@ -55,7 +55,7 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 }
 
 func (l *Led) draw(cameraOffset *rl.Vector2) {
-	l.CameraOffset = cameraOffset
+	l.CameraOffset = *cameraOffset
 	color := l.Color
 	if l.State {
 		color = rl.Red
@@ -69,6 +69,9 @@ func (l *Led) update() {
 
 func (l *Led) HandleInput() {
 	l.InputPort.HandleInput()
+	if l.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		fmt.Printf("Address of the input port (ID: %d): %p\n", l.InputPortId, l.InputPort)
+	}
 }
 
 func (l *Led) setTranslucent(set bool) {
@@ -91,5 +94,6 @@ func (l *Led) setPosition(position rl.Vector2) {
 }
 
 func (l *Led) hovered() bool {
-	return false
+	mouse := rl.GetMousePosition()
+	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(l.Pos, l.CameraOffset), l.Radius)
 }

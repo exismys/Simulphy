@@ -7,11 +7,14 @@ import (
 )
 
 type AndGate struct {
-	Pos        rl.Vector2
-	Color      rl.Color
-	InputPortA *Port
-	InputPortB *Port
-	OutputPort *Port
+	Pos          rl.Vector2
+	Color        rl.Color
+	InputPortA   *Port
+	InputPortB   *Port
+	OutputPort   *Port
+	InputPortAId int32
+	InputPortBId int32
+	OutputPortId int32
 }
 
 func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
@@ -82,6 +85,9 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 	ag.InputPortA.Color.A = 128
 	ag.InputPortB.Color.A = 128
 	ag.OutputPort.Color.A = 128
+	ag.InputPortAId = ag.InputPortA.Id
+	ag.InputPortBId = ag.InputPortB.Id
+	ag.OutputPortId = ag.OutputPort.Id
 	portMap[ag.InputPortA.Id] = ag.InputPortA
 	portMap[ag.InputPortB.Id] = ag.InputPortB
 	portMap[ag.OutputPort.Id] = ag.OutputPort

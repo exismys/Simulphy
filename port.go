@@ -1,6 +1,10 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"fmt"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 type StateResMethod int
 
@@ -44,5 +48,6 @@ func (p *Port) hovered() bool {
 func (p *Port) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		p.onClick()
+		fmt.Printf("Address of clicked port (ID %d): %p", p.Id, p)
 	}
 }

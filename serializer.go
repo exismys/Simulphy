@@ -67,6 +67,9 @@ func deserialize(sim *Simulation) {
 		sim.Objects = append(sim.Objects, l)
 	}
 	for _, ag := range andGates {
+		ag.InputPortA = portMap[ag.InputPortAId]
+		ag.InputPortB = portMap[ag.InputPortBId]
+		ag.OutputPort = portMap[ag.OutputPortId]
 		restoreReferences(ag.InputPortA)
 		restoreReferences(ag.InputPortB)
 		restoreReferences(ag.OutputPort)
@@ -81,6 +84,8 @@ func deserialize(sim *Simulation) {
 		sim.Objects = append(sim.Objects, og)
 	}
 	for _, ng := range notGates {
+		ng.InputPort = portMap[ng.InputPortId]
+		ng.OutputPort = portMap[ng.OutputPortId]
 		restoreReferences(ng.InputPort)
 		restoreReferences(ng.OutputPort)
 		attachFuncNg(sim, ng)

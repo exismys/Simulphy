@@ -76,6 +76,8 @@ func (p *Power) HandleInput() {
 		p.State = !p.State
 		p.OutputPort.State = p.State
 		fmt.Println(p.State, p.OutputPort.State)
+		fmt.Println("Port Map: ", portMap)
+		fmt.Printf("Address of the outport port (ID: %d): %p", p.OutputPort.Id, p.OutputPort)
 		refreshState()
 	}
 	p.OutputPort.HandleInput()

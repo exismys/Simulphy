@@ -7,10 +7,13 @@ import (
 )
 
 type NotGate struct {
-	Pos        rl.Vector2
-	Color      rl.Color
-	InputPort  *Port
-	OutputPort *Port
+	Pos          rl.Vector2
+	Color        rl.Color
+	InputPort    *Port
+	OutputPort   *Port
+	InputPortId  int32
+	OutputPortId int32
+	CameraOffset *rl.Vector2
 }
 
 func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
@@ -58,6 +61,8 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 	}
 	ng.InputPort.Color.A = 128
 	ng.OutputPort.Color.A = 128
+	ng.InputPortId = ng.InputPort.Id
+	ng.OutputPortId = ng.OutputPort.Id
 	portMap[ng.InputPort.Id] = ng.InputPort
 	portMap[ng.OutputPort.Id] = ng.OutputPort
 	return ng
@@ -65,7 +70,7 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 
 func (ng *NotGate) draw(CameraOffset *rl.Vector2) {
 	Pos := rl.Vector2Subtract(ng.Pos, *CameraOffset)
-
+	ng.CameraOffset = CameraOffset
 	p1 := rl.NewVector2(Pos.X-20, Pos.Y-20)
 	p2 := rl.NewVector2(Pos.X-20, Pos.Y+20)
 	p3 := rl.NewVector2(Pos.X+10, Pos.Y)
@@ -105,4 +110,14 @@ func (ng *NotGate) setTranslucent(set bool) {
 func (ng *NotGate) HandleInput() {
 	ng.InputPort.HandleInput()
 	ng.OutputPort.HandleInput()
+	if ng.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		fmt.Printf("Address of the input port: %p\n", ng.InputPort)
+		fmt.Printf("Address of the output port: %p\n", ng.OutputPort)
+	}
+}
+
+func (ng *NotGate) hovered() bool {
+	mouse := rl.GetMousePosition()
+	radius := 20
+	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(ng.Pos, *ng.CameraOffset), float32(radius))
 }
