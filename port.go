@@ -1,6 +1,10 @@
 package main
 
-import rl "github.com/gen2brain/raylib-go/raylib"
+import (
+	"fmt"
+
+	rl "github.com/gen2brain/raylib-go/raylib"
+)
 
 type StateResMethod int
 
@@ -12,34 +16,50 @@ const (
 )
 
 type Port struct {
-	pos          rl.Vector2
-	radius       float32
-	color        rl.Color
-	onClick      func()
-	state        bool
-	inputPort    bool
-	fromPorts    []*Port
-	inputPorts   []*Port
-	resMethod    StateResMethod
-	cameraOffset rl.Vector2
+	Id            int32
+	Pos           rl.Vector2
+	Radius        float32
+	Color         rl.Color
+	onClick       func()
+	State         bool
+	IsInputPort   bool
+	FromPortsIds  []int32 // For serialization
+	InputPortsIds []int32 // For serialization
+	FromPorts     []*Port `json:"-"` // Not serializable
+	InputPorts    []*Port `json:"-"` // Not serializable
+	ResMethod     StateResMethod
+	CameraOffset  rl.Vector2
 }
 
 func (p *Port) draw(cameraOffset *rl.Vector2) {
-	p.cameraOffset = *cameraOffset
-	radius := p.radius
+	p.CameraOffset = *cameraOffset
+	radius := p.Radius
 	if p.hovered() {
 		radius += 2
 	}
-	rl.DrawCircleV(rl.Vector2Subtract(p.pos, *cameraOffset), radius, p.color)
+	rl.DrawCircleV(rl.Vector2Subtract(p.Pos, *cameraOffset), radius, p.Color)
 }
 
 func (p *Port) hovered() bool {
 	mouse := rl.GetMousePosition()
-	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(p.pos, p.cameraOffset), p.radius)
+	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(p.Pos, p.CameraOffset), p.Radius)
 }
 
 func (p *Port) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		p.onClick()
+		fmt.Printf("Address of clicked port (ID %d): %p\n", p.Id, p)
+		if p.IsInputPort {
+			fmt.Printf("Addresses of from ports (in ID:Address format): ")
+			for _, fp := range p.FromPorts {
+				fmt.Printf("%d:%p, ", fp.Id, fp)
+			}
+		} else {
+			fmt.Printf("Addresses of input ports (in ID:Address format): ")
+			for _, ip := range p.InputPorts {
+				fmt.Printf("%d:%p, ", ip.Id, ip)
+			}
+		}
+		fmt.Println()
 	}
 }

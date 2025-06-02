@@ -7,72 +7,80 @@ import (
 )
 
 type Led struct {
-	pos          rl.Vector2
-	radius       float32
-	color        rl.Color
-	state        bool
-	inputPort    *Port
-	cameraOffset *rl.Vector2
+	Pos          rl.Vector2
+	Radius       float32
+	Color        rl.Color
+	State        bool
+	InputPort    *Port
+	InputPortId  int32
+	CameraOffset rl.Vector2
 }
 
 func NewLed(sim *Simulation, position rl.Vector2) *Led {
 	l := &Led{
-		pos:    position,
-		radius: 20,
-		state:  false,
-		color:  rl.Gray,
+		Pos:    position,
+		Radius: 20,
+		State:  false,
+		Color:  rl.Gray,
 	}
-	l.inputPort = &Port{
-		pos:       rl.NewVector2(position.X+l.radius+6, position.Y),
-		radius:    5,
-		inputPort: true,
-		color:     rl.SkyBlue,
-		fromPorts: []*Port{},
+	l.InputPort = &Port{
+		Id:          getNewPortId(),
+		Pos:         rl.NewVector2(position.X+l.Radius+6, position.Y),
+		Radius:      5,
+		IsInputPort: true,
+		Color:       rl.SkyBlue,
 	}
-	leds = append(leds, l)
-	l.inputPort.onClick = func() {
+	l.InputPort.onClick = func() {
 		fmt.Println("Input port of the Led clicked!")
-		if sim.ghostObject != nil {
-			w := sim.ghostObject.(*Wire)
-			w.To = l.inputPort.pos
-			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
-			sim.objects = append(sim.objects, w)
+		if sim.GhostObject != nil {
+			w := sim.GhostObject.(*Wire)
+			w.To = l.InputPort.Pos
+			w.ToPort = l.InputPort
+			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
+			sim.Objects = append(sim.Objects, w)
 			wires = append(wires, w)
-			l.inputPort.fromPorts = append(l.inputPort.fromPorts, w.FromPort)
-			finalPort = l.inputPort
-			l.state = calculateState(finalPort)
-			fmt.Println("Led State: ", l.state)
+			l.InputPort.FromPorts = append(l.InputPort.FromPorts, w.FromPort)
+			l.InputPort.FromPortsIds = append(l.InputPort.FromPortsIds, w.FromPort.Id)
+			finalPort = l.InputPort
+			l.State = calculateState(finalPort)
+			fmt.Println("Led State: ", l.State)
 			fmt.Println("Number of wires: ", len(wires))
-			sim.ghostObject = nil
+			sim.GhostObject = nil
 		}
 	}
+	l.InputPortId = l.InputPort.Id
+	portMap[l.InputPort.Id] = l.InputPort
+	fmt.Println(portMap)
 	return l
 }
 
 func (l *Led) draw(cameraOffset *rl.Vector2) {
-	l.cameraOffset = cameraOffset
-	color := l.color
-	if l.state {
+	l.CameraOffset = *cameraOffset
+	color := l.Color
+	if l.State {
 		color = rl.Red
 	}
-	rl.DrawCircleV(rl.Vector2Subtract(l.pos, *cameraOffset), l.radius, color)
-	l.inputPort.draw(cameraOffset)
+	rl.DrawCircleV(rl.Vector2Subtract(l.Pos, *cameraOffset), l.Radius, color)
+	l.InputPort.draw(cameraOffset)
 }
 
 func (l *Led) update() {
 }
 
 func (l *Led) HandleInput() {
-	l.inputPort.HandleInput()
+	l.InputPort.HandleInput()
+	if l.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		fmt.Printf("Address of the input port (ID: %d): %p\n", l.InputPortId, l.InputPort)
+	}
 }
 
 func (l *Led) setTranslucent(set bool) {
 	if set {
-		l.color.A = 128
-		l.inputPort.color.A = 128
+		l.Color.A = 128
+		l.InputPort.Color.A = 128
 	} else {
-		l.color.A = 255
-		l.inputPort.color.A = 255
+		l.Color.A = 255
+		l.InputPort.Color.A = 255
 	}
 }
 
@@ -81,10 +89,11 @@ func (l *Led) isDynamic() bool {
 }
 
 func (l *Led) setPosition(position rl.Vector2) {
-	l.pos = position
-	l.inputPort.pos = rl.NewVector2(position.X-l.radius-6, position.Y)
+	l.Pos = position
+	l.InputPort.Pos = rl.NewVector2(position.X-l.Radius-6, position.Y)
 }
 
 func (l *Led) hovered() bool {
-	return false
+	mouse := rl.GetMousePosition()
+	return rl.CheckCollisionPointCircle(mouse, rl.Vector2Subtract(l.Pos, l.CameraOffset), l.Radius)
 }

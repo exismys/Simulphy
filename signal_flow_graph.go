@@ -2,37 +2,31 @@ package main
 
 import "fmt"
 
-var wires []*Wire
-var ports []*Port
-var leds []*Led
-
-var finalPort *Port
-
 func calculateState(p *Port) bool {
-	if p.inputPort {
-		state := p.state
-		for _, fp := range p.fromPorts {
+	if p.IsInputPort {
+		state := p.State
+		for _, fp := range p.FromPorts {
 			state = state || calculateState(fp)
 		}
 		fmt.Println("Returning state: ", state)
 		return state
 	}
-	state := p.state
-	if p.resMethod == NOT {
-		for _, ip := range p.inputPorts {
+	state := p.State
+	if p.ResMethod == NOT {
+		for _, ip := range p.InputPorts {
 			state = !calculateState(ip)
 		}
-	} else if p.resMethod == OR {
+	} else if p.ResMethod == OR {
 		state = false
-		for _, ip := range p.inputPorts {
+		for _, ip := range p.InputPorts {
 			state = state || calculateState(ip)
 		}
-	} else if p.resMethod == AND {
+	} else if p.ResMethod == AND {
 		state = true
-		for _, ip := range p.inputPorts {
+		for _, ip := range p.InputPorts {
 			state = state && calculateState(ip)
 		}
-	} else if p.resMethod == NONE {
+	} else if p.ResMethod == NONE {
 	}
 	fmt.Println("Returning state: ", state)
 	return state
@@ -40,6 +34,6 @@ func calculateState(p *Port) bool {
 
 func refreshState() {
 	for _, led := range leds {
-		led.state = calculateState(led.inputPort)
+		led.State = calculateState(led.InputPort)
 	}
 }

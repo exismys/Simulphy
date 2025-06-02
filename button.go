@@ -6,7 +6,7 @@ type Button struct {
 	Pos     rl.Vector2
 	Size    rl.Vector2
 	Label   string
-	OnClick func()
+	onClick func()
 }
 
 func (b *Button) hovered() bool {
@@ -37,6 +37,6 @@ func (b *Button) Draw() {
 
 func (b *Button) HandleInput() {
 	if rl.IsMouseButtonPressed(rl.MouseButtonLeft) && b.hovered() {
-		b.OnClick()
+		b.onClick()
 	}
 }

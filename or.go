@@ -7,95 +7,108 @@ import (
 )
 
 type OrGate struct {
-	pos        rl.Vector2
-	color      rl.Color
-	inputPortA *Port
-	inputPortB *Port
-	outputPort *Port
+	Pos          rl.Vector2
+	Color        rl.Color
+	InputPortA   *Port
+	InputPortB   *Port
+	OutputPort   *Port
+	InputPortAId int32
+	InputPortBId int32
+	OutputPortId int32
 }
 
-func NewOrGate(sim *Simulation, position rl.Vector2, color rl.Color) *OrGate {
+func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 	og := &OrGate{
-		pos:   position,
-		color: color,
+		Pos:   Position,
+		Color: Color,
 	}
-	og.inputPortA = &Port{
-		pos:       rl.NewVector2(og.pos.X-26, og.pos.Y-10),
-		radius:    5,
-		color:     rl.SkyBlue,
-		inputPort: true,
-		fromPorts: []*Port{},
+	og.InputPortA = &Port{
+		Id:          getNewPortId(),
+		Pos:         rl.NewVector2(og.Pos.X-26, og.Pos.Y-10),
+		Radius:      5,
+		Color:       rl.SkyBlue,
+		IsInputPort: true,
 	}
-	og.inputPortB = &Port{
-		pos:       rl.NewVector2(og.pos.X-26, og.pos.Y+10),
-		radius:    5,
-		color:     rl.SkyBlue,
-		inputPort: true,
-		fromPorts: []*Port{},
+	og.InputPortB = &Port{
+		Id:          getNewPortId(),
+		Pos:         rl.NewVector2(og.Pos.X-26, og.Pos.Y+10),
+		Radius:      5,
+		Color:       rl.SkyBlue,
+		IsInputPort: true,
 	}
-	og.outputPort = &Port{
-		pos:        rl.NewVector2(og.pos.X+26, og.pos.Y),
-		radius:     5,
-		color:      rl.Orange,
-		inputPorts: []*Port{og.inputPortA, og.inputPortB},
-		resMethod:  OR,
+	og.OutputPort = &Port{
+		Id:            getNewPortId(),
+		Pos:           rl.NewVector2(og.Pos.X+26, og.Pos.Y),
+		Radius:        5,
+		Color:         rl.Orange,
+		InputPorts:    []*Port{og.InputPortA, og.InputPortB},
+		InputPortsIds: []int32{og.InputPortA.Id, og.InputPortB.Id},
+		ResMethod:     OR,
 	}
-	og.inputPortA.onClick = func() {
+	og.InputPortA.onClick = func() {
 		fmt.Println("Input port of OR gate clicked!")
-		if sim.ghostObject != nil {
-			w := sim.ghostObject.(*Wire)
-			w.To = og.inputPortA.pos
-			w.ToPort = og.inputPortA
-			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
+		if sim.GhostObject != nil {
+			w := sim.GhostObject.(*Wire)
+			w.To = og.InputPortA.Pos
+			w.ToPort = og.InputPortA
+			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			wires = append(wires, w)
-			og.inputPortA.fromPorts = append(og.inputPortA.fromPorts, w.FromPort)
+			og.InputPortA.FromPorts = append(og.InputPortA.FromPorts, w.FromPort)
+			og.InputPortA.FromPortsIds = append(og.InputPortA.FromPortsIds, w.FromPort.Id)
 			fmt.Println("Number of wires: ", len(wires))
-			sim.objects = append(sim.objects, w)
-			sim.ghostObject = nil
+			sim.Objects = append(sim.Objects, w)
+			sim.GhostObject = nil
 		}
 	}
-	og.inputPortB.onClick = func() {
+	og.InputPortB.onClick = func() {
 		fmt.Println("Input port of NOT gate clicked!")
-		if sim.ghostObject != nil {
-			w := sim.ghostObject.(*Wire)
-			w.To = og.inputPortB.pos
-			w.ToPort = og.inputPortB
-			w.From = rl.Vector2Add(w.From, sim.cameraOffset)
+		if sim.GhostObject != nil {
+			w := sim.GhostObject.(*Wire)
+			w.To = og.InputPortB.Pos
+			w.ToPort = og.InputPortB
+			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			wires = append(wires, w)
-			og.inputPortB.fromPorts = append(og.inputPortB.fromPorts, w.FromPort)
+			og.InputPortB.FromPorts = append(og.InputPortB.FromPorts, w.FromPort)
+			og.InputPortB.FromPortsIds = append(og.InputPortB.FromPortsIds, w.FromPort.Id)
 			fmt.Println("Number of wires: ", len(wires))
-			sim.objects = append(sim.objects, w)
-			sim.ghostObject = nil
+			sim.Objects = append(sim.Objects, w)
+			sim.GhostObject = nil
 		}
 	}
-	og.outputPort.onClick = func() {
+	og.OutputPort.onClick = func() {
 		fmt.Println("Output port of OR gate clicked")
 		wire := Wire{
-			From:     rl.Vector2Subtract(og.outputPort.pos, sim.cameraOffset),
-			FromPort: og.outputPort,
+			From:     rl.Vector2Subtract(og.OutputPort.Pos, sim.CameraOffset),
+			FromPort: og.OutputPort,
 		}
-		sim.ghostObject = &wire
+		sim.GhostObject = &wire
 	}
-	og.inputPortA.color.A = 128
-	og.inputPortB.color.A = 128
-	og.outputPort.color.A = 128
+	og.InputPortA.Color.A = 128
+	og.InputPortB.Color.A = 128
+	og.OutputPort.Color.A = 128
+	og.InputPortAId = og.InputPortA.Id
+	og.InputPortBId = og.InputPortB.Id
+	og.OutputPortId = og.OutputPort.Id
+	portMap[og.InputPortA.Id] = og.InputPortA
+	portMap[og.InputPortB.Id] = og.InputPortB
+	portMap[og.OutputPort.Id] = og.OutputPort
 	return og
 }
 
-func (og *OrGate) draw(cameraOffset *rl.Vector2) {
-	pos := rl.Vector2Subtract(og.pos, *cameraOffset)
+func (og *OrGate) draw(CameraOffset *rl.Vector2) {
+	Pos := rl.Vector2Subtract(og.Pos, *CameraOffset)
 
 	rl.DrawRectangleRec(
-		rl.NewRectangle(pos.X-20, pos.Y-20, 20, 40),
-		og.color,
+		rl.NewRectangle(Pos.X-20, Pos.Y-20, 20, 40),
+		og.Color,
 	)
-	cutColor := rl.NewColor(0, 0, 0, og.color.A)
-	rl.DrawCircleSector(rl.NewVector2(pos.X-20, pos.Y), 20, -90, 90, 32, cutColor)
-	rl.DrawCircleSector(rl.NewVector2(pos.X, pos.Y), 20, -90, 90, 32, og.color)
+	cutColor := rl.NewColor(0, 0, 0, og.Color.A)
+	rl.DrawCircleSector(rl.NewVector2(Pos.X-20, Pos.Y), 20, -90, 90, 32, cutColor)
+	rl.DrawCircleSector(rl.NewVector2(Pos.X, Pos.Y), 20, -90, 90, 32, og.Color)
 
-	og.inputPortA.draw(cameraOffset)
-	og.inputPortB.draw(cameraOffset)
-	og.outputPort.draw(cameraOffset)
+	og.InputPortA.draw(CameraOffset)
+	og.InputPortB.draw(CameraOffset)
+	og.OutputPort.draw(CameraOffset)
 }
 
 func (og *OrGate) update() {
@@ -105,29 +118,29 @@ func (og *OrGate) isDynamic() bool {
 	return false
 }
 
-func (og *OrGate) setPosition(position rl.Vector2) {
-	og.pos = position
-	og.inputPortA.pos = rl.NewVector2(position.X-26, position.Y-10)
-	og.inputPortB.pos = rl.NewVector2(position.X-26, position.Y+10)
-	og.outputPort.pos = rl.NewVector2(position.X+26, position.Y)
+func (og *OrGate) setPosition(Position rl.Vector2) {
+	og.Pos = Position
+	og.InputPortA.Pos = rl.NewVector2(Position.X-26, Position.Y-10)
+	og.InputPortB.Pos = rl.NewVector2(Position.X-26, Position.Y+10)
+	og.OutputPort.Pos = rl.NewVector2(Position.X+26, Position.Y)
 }
 
 func (og *OrGate) setTranslucent(set bool) {
 	if set {
-		og.color.A = 128
-		og.inputPortA.color.A = 128
-		og.inputPortB.color.A = 128
-		og.outputPort.color.A = 128
+		og.Color.A = 128
+		og.InputPortA.Color.A = 128
+		og.InputPortB.Color.A = 128
+		og.OutputPort.Color.A = 128
 	} else {
-		og.color.A = 255
-		og.inputPortA.color.A = 255
-		og.inputPortB.color.A = 255
-		og.outputPort.color.A = 255
+		og.Color.A = 255
+		og.InputPortA.Color.A = 255
+		og.InputPortB.Color.A = 255
+		og.OutputPort.Color.A = 255
 	}
 }
 
 func (og *OrGate) HandleInput() {
-	og.inputPortA.HandleInput()
-	og.inputPortB.HandleInput()
-	og.outputPort.HandleInput()
+	og.InputPortA.HandleInput()
+	og.InputPortB.HandleInput()
+	og.OutputPort.HandleInput()
 }
