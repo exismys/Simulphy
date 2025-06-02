@@ -12,17 +12,19 @@ const (
 )
 
 type Port struct {
-	Id           int32
-	Pos          rl.Vector2
-	Radius       float32
-	Color        rl.Color
-	onClick      func()
-	State        bool
-	IsInputPort  bool
-	FromPorts    []*Port
-	InputPorts   []*Port
-	ResMethod    StateResMethod
-	CameraOffset rl.Vector2
+	Id            int32
+	Pos           rl.Vector2
+	Radius        float32
+	Color         rl.Color
+	onClick       func()
+	State         bool
+	IsInputPort   bool
+	FromPortsIds  []int32 // For serialization
+	InputPortsIds []int32 // For serialization
+	FromPorts     []*Port `json:"-"` // Not serializable
+	InputPorts    []*Port `json:"-"` // Not serializable
+	ResMethod     StateResMethod
+	CameraOffset  rl.Vector2
 }
 
 func (p *Port) draw(cameraOffset *rl.Vector2) {

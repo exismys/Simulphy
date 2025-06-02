@@ -34,3 +34,6 @@ func getNewPortId() int32 {
 	portId += 1
 	return portId
 }
+
+// Maps port IDs and port objects
+var portMap map[int32]*Port = make(map[int32]*Port)

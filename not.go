@@ -24,7 +24,6 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 		Radius:      5,
 		Color:       rl.SkyBlue,
 		IsInputPort: true,
-		FromPorts:   []*Port{},
 	}
 	ng.OutputPort = &Port{
 		Id:         getNewPortId(),
@@ -43,6 +42,7 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			wires = append(wires, w)
 			ng.InputPort.FromPorts = append(ng.InputPort.FromPorts, w.FromPort)
+			ng.InputPort.FromPortsIds = append(ng.InputPort.FromPortsIds, w.FromPort.Id)
 			fmt.Println("Number of wires: ", len(wires))
 			sim.Objects = append(sim.Objects, w)
 			sim.GhostObject = nil
@@ -58,6 +58,8 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 	}
 	ng.InputPort.Color.A = 128
 	ng.OutputPort.Color.A = 128
+	portMap[ng.InputPort.Id] = ng.InputPort
+	portMap[ng.OutputPort.Id] = ng.OutputPort
 	return ng
 }
 

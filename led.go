@@ -12,6 +12,7 @@ type Led struct {
 	Color        rl.Color
 	State        bool
 	InputPort    *Port
+	InputPortId  int32
 	CameraOffset *rl.Vector2
 }
 
@@ -28,17 +29,18 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 		Radius:      5,
 		IsInputPort: true,
 		Color:       rl.SkyBlue,
-		FromPorts:   []*Port{},
 	}
 	l.InputPort.onClick = func() {
 		fmt.Println("Input port of the Led clicked!")
 		if sim.GhostObject != nil {
 			w := sim.GhostObject.(*Wire)
 			w.To = l.InputPort.Pos
+			w.ToPort = l.InputPort
 			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			sim.Objects = append(sim.Objects, w)
 			wires = append(wires, w)
 			l.InputPort.FromPorts = append(l.InputPort.FromPorts, w.FromPort)
+			l.InputPort.FromPortsIds = append(l.InputPort.FromPortsIds, w.FromPort.Id)
 			finalPort = l.InputPort
 			l.State = calculateState(finalPort)
 			fmt.Println("Led State: ", l.State)
@@ -46,6 +48,9 @@ func NewLed(sim *Simulation, position rl.Vector2) *Led {
 			sim.GhostObject = nil
 		}
 	}
+	l.InputPortId = l.InputPort.Id
+	portMap[l.InputPort.Id] = l.InputPort
+	fmt.Println(portMap)
 	return l
 }
 

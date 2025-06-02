@@ -15,6 +15,7 @@ type SimState struct {
 	Leds     []*Led
 	Wires    []*Wire
 	Powers   []*Power
+	PortMap  map[int32]*Port
 }
 
 func serialize() {
@@ -25,6 +26,7 @@ func serialize() {
 		Leds:     leds,
 		Wires:    wires,
 		Powers:   powers,
+		PortMap:  portMap,
 	}
 
 	s, error := json.Marshal(simState)
@@ -54,30 +56,58 @@ func deserialize(sim *Simulation) {
 	leds = simState.Leds
 	wires = simState.Wires
 	powers = simState.Powers
+	portMap = simState.PortMap
 
-	// Attach functions and populate unserializable simulation fields
+	// Attach functions and populate unserializable simulation fields,
+	// and restore references by looking up port ID to port object map
 	for _, l := range leds {
+		l.InputPort = portMap[l.InputPortId]
+		restoreReferences(l.InputPort)
 		attachFuncL(sim, l)
 		sim.Objects = append(sim.Objects, l)
 	}
 	for _, ag := range andGates {
+		restoreReferences(ag.InputPortA)
+		restoreReferences(ag.InputPortB)
+		restoreReferences(ag.OutputPort)
 		attachFuncAg(sim, ag)
 		sim.Objects = append(sim.Objects, ag)
 	}
 	for _, og := range orGates {
+		restoreReferences(og.InputPortA)
+		restoreReferences(og.InputPortB)
+		restoreReferences(og.OutputPort)
 		attachFuncOg(sim, og)
 		sim.Objects = append(sim.Objects, og)
 	}
 	for _, ng := range notGates {
+		restoreReferences(ng.InputPort)
+		restoreReferences(ng.OutputPort)
 		attachFuncNg(sim, ng)
 		sim.Objects = append(sim.Objects, ng)
 	}
 	for _, p := range powers {
+		p.OutputPort = portMap[p.OutputPortId]
+		restoreReferences(p.OutputPort)
 		attachFuncP(sim, p)
 		sim.Objects = append(sim.Objects, p)
 	}
 	for _, w := range wires {
+		restoreReferences(w.FromPort)
+		restoreReferences(w.ToPort)
 		sim.Objects = append(sim.Objects, w)
+	}
+}
+
+func restoreReferences(port *Port) {
+	if port.IsInputPort {
+		for _, p := range port.FromPortsIds {
+			port.FromPorts = append(port.FromPorts, portMap[p])
+		}
+	} else {
+		for _, p := range port.InputPortsIds {
+			port.InputPorts = append(port.InputPorts, portMap[p])
+		}
 	}
 }
 

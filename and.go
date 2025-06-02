@@ -25,7 +25,6 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 		Radius:      5,
 		Color:       rl.SkyBlue,
 		IsInputPort: true,
-		FromPorts:   []*Port{},
 	}
 	ag.InputPortB = &Port{
 		Id:          getNewPortId(),
@@ -33,7 +32,6 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 		Radius:      5,
 		Color:       rl.SkyBlue,
 		IsInputPort: true,
-		FromPorts:   []*Port{},
 	}
 	ag.OutputPort = &Port{
 		Id:         getNewPortId(),
@@ -52,6 +50,7 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			wires = append(wires, w)
 			ag.InputPortA.FromPorts = append(ag.InputPortA.FromPorts, w.FromPort)
+			ag.InputPortA.FromPortsIds = append(ag.InputPortA.FromPortsIds, w.FromPort.Id)
 			fmt.Println("Number of wires: ", len(wires))
 			sim.Objects = append(sim.Objects, w)
 			sim.GhostObject = nil
@@ -66,6 +65,7 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 			w.From = rl.Vector2Add(w.From, sim.CameraOffset)
 			wires = append(wires, w)
 			ag.InputPortB.FromPorts = append(ag.InputPortB.FromPorts, w.FromPort)
+			ag.InputPortB.FromPortsIds = append(ag.InputPortB.FromPortsIds, w.FromPort.Id)
 			fmt.Println("Number of wires: ", len(wires))
 			sim.Objects = append(sim.Objects, w)
 			sim.GhostObject = nil
@@ -82,6 +82,9 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 	ag.InputPortA.Color.A = 128
 	ag.InputPortB.Color.A = 128
 	ag.OutputPort.Color.A = 128
+	portMap[ag.InputPortA.Id] = ag.InputPortA
+	portMap[ag.InputPortB.Id] = ag.InputPortB
+	portMap[ag.OutputPort.Id] = ag.OutputPort
 	return ag
 }
 

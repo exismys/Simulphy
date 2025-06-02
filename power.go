@@ -9,6 +9,7 @@ import (
 type Power struct {
 	Pos          rl.Vector2
 	OutputPort   *Port
+	OutputPortId int32
 	State        bool
 	RadiusInner  float32
 	RadiusOuter  float32
@@ -37,7 +38,6 @@ func NewPowerSource(sim *Simulation, Position rl.Vector2) *Power {
 		State:       p.State,
 		ResMethod:   NONE,
 		IsInputPort: false,
-		InputPorts:  []*Port{},
 	}
 	p.OutputPort.onClick = func() {
 		fmt.Println("Output port of POWER SOURCE clicked")
@@ -47,7 +47,9 @@ func NewPowerSource(sim *Simulation, Position rl.Vector2) *Power {
 		}
 		sim.GhostObject = &wire
 	}
+	p.OutputPortId = p.OutputPort.Id
 	p.OutputPort.Color.A = 128
+	portMap[p.OutputPort.Id] = p.OutputPort
 	return p
 }
 
@@ -73,6 +75,7 @@ func (p *Power) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		p.State = !p.State
 		p.OutputPort.State = p.State
+		fmt.Println(p.State, p.OutputPort.State)
 		refreshState()
 	}
 	p.OutputPort.HandleInput()
