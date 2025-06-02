@@ -77,6 +77,9 @@ func deserialize(sim *Simulation) {
 		sim.Objects = append(sim.Objects, ag)
 	}
 	for _, og := range orGates {
+		og.InputPortA = portMap[og.InputPortAId]
+		og.InputPortB = portMap[og.InputPortBId]
+		og.OutputPort = portMap[og.OutputPortId]
 		restoreReferences(og.InputPortA)
 		restoreReferences(og.InputPortB)
 		restoreReferences(og.OutputPort)
@@ -98,6 +101,8 @@ func deserialize(sim *Simulation) {
 		sim.Objects = append(sim.Objects, p)
 	}
 	for _, w := range wires {
+		w.FromPort = portMap[w.FromPort.Id]
+		w.ToPort = portMap[w.ToPort.Id]
 		restoreReferences(w.FromPort)
 		restoreReferences(w.ToPort)
 		sim.Objects = append(sim.Objects, w)

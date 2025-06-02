@@ -37,12 +37,13 @@ func NewAndGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *AndGate {
 		IsInputPort: true,
 	}
 	ag.OutputPort = &Port{
-		Id:         getNewPortId(),
-		Pos:        rl.NewVector2(ag.Pos.X+26, ag.Pos.Y),
-		Radius:     5,
-		Color:      rl.Orange,
-		InputPorts: []*Port{ag.InputPortA, ag.InputPortB},
-		ResMethod:  AND,
+		Id:            getNewPortId(),
+		Pos:           rl.NewVector2(ag.Pos.X+26, ag.Pos.Y),
+		Radius:        5,
+		Color:         rl.Orange,
+		InputPorts:    []*Port{ag.InputPortA, ag.InputPortB},
+		InputPortsIds: []int32{ag.InputPortA.Id, ag.InputPortB.Id},
+		ResMethod:     AND,
 	}
 	ag.InputPortA.onClick = func() {
 		fmt.Println("Input port of AND gate clicked!")

@@ -7,11 +7,14 @@ import (
 )
 
 type OrGate struct {
-	Pos        rl.Vector2
-	Color      rl.Color
-	InputPortA *Port
-	InputPortB *Port
-	OutputPort *Port
+	Pos          rl.Vector2
+	Color        rl.Color
+	InputPortA   *Port
+	InputPortB   *Port
+	OutputPort   *Port
+	InputPortAId int32
+	InputPortBId int32
+	OutputPortId int32
 }
 
 func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
@@ -34,12 +37,13 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 		IsInputPort: true,
 	}
 	og.OutputPort = &Port{
-		Id:         getNewPortId(),
-		Pos:        rl.NewVector2(og.Pos.X+26, og.Pos.Y),
-		Radius:     5,
-		Color:      rl.Orange,
-		InputPorts: []*Port{og.InputPortA, og.InputPortB},
-		ResMethod:  OR,
+		Id:            getNewPortId(),
+		Pos:           rl.NewVector2(og.Pos.X+26, og.Pos.Y),
+		Radius:        5,
+		Color:         rl.Orange,
+		InputPorts:    []*Port{og.InputPortA, og.InputPortB},
+		InputPortsIds: []int32{og.InputPortA.Id, og.InputPortB.Id},
+		ResMethod:     OR,
 	}
 	og.InputPortA.onClick = func() {
 		fmt.Println("Input port of OR gate clicked!")
@@ -82,6 +86,9 @@ func NewOrGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *OrGate {
 	og.InputPortA.Color.A = 128
 	og.InputPortB.Color.A = 128
 	og.OutputPort.Color.A = 128
+	og.InputPortAId = og.InputPortA.Id
+	og.InputPortBId = og.InputPortB.Id
+	og.OutputPortId = og.OutputPort.Id
 	portMap[og.InputPortA.Id] = og.InputPortA
 	portMap[og.InputPortB.Id] = og.InputPortB
 	portMap[og.OutputPort.Id] = og.OutputPort
