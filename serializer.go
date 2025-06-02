@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -36,8 +38,8 @@ func serialize() {
 	os.WriteFile("circuit.sim.json", s, 0644)
 }
 
-func deserialize(sim *Simulation) {
-	data, err := os.ReadFile("circuit.sim.json")
+func deserialize(sim *Simulation, simStateFile string) {
+	data, err := os.ReadFile(filepath.Join(os.Getenv("HOME"), "simulphy", simStateFile+".sim.json"))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -252,4 +254,23 @@ func attachFuncNg(sim *Simulation, ng *NotGate) {
 		}
 		sim.GhostObject = &wire
 	}
+}
+
+func getSimStateFiles() ([]string, error) {
+	var stateFiles []string
+	serialPath := filepath.Join(os.Getenv("HOME"), "simulphy")
+	err := filepath.Walk(serialPath, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if filepath.Ext(path) == ".json" {
+			stateFiles = append(stateFiles, strings.TrimSuffix(filepath.Base(path), ".sim.json"))
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return stateFiles, nil
 }

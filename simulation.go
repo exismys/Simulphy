@@ -20,6 +20,7 @@ type Simulation struct {
 	GhostObject  SimObject
 	Buttons      []*Button
 	Inventory    Inventory
+	SimStateInv  Inventory
 	CameraOffset rl.Vector2
 }
 
@@ -67,12 +68,28 @@ func NewSimulation() *Simulation {
 	}
 	loadBtn.onClick = func() {
 		fmt.Println("The LOAD button was clicked!")
-		deserialize(sim)
 		if loadBtn.Label == "LOAD" {
+			stateFiles, err := getSimStateFiles()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			sim.SimStateInv = *NewInventory(
+				rl.NewVector2(20+100+20, float32(simHeight)-20),
+				stateFiles,
+				50,
+				100,
+				func(item string) {
+					sim.SimStateInv.Visible = false
+					loadBtn.Label = "LOAD"
+					deserialize(sim, item)
+				},
+			)
 			loadBtn.Label = "X"
 		} else {
 			loadBtn.Label = "LOAD"
 		}
+		sim.SimStateInv.Visible = !sim.SimStateInv.Visible
 	}
 	sim.Buttons = append(sim.Buttons, loadBtn)
 
@@ -146,6 +163,7 @@ func (sim *Simulation) HandleInput() {
 		btn.HandleInput()
 	}
 	sim.Inventory.HandleInput()
+	sim.SimStateInv.HandleInput()
 	for _, obj := range sim.Objects {
 		obj.HandleInput()
 	}
@@ -172,6 +190,7 @@ func (sim *Simulation) Render() {
 		btn.Draw()
 	}
 	sim.Inventory.Draw()
+	sim.SimStateInv.Draw()
 
 	// Draw ghost object
 	if sim.GhostObject != nil {
