@@ -48,6 +48,18 @@ func (p *Port) hovered() bool {
 func (p *Port) HandleInput() {
 	if p.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
 		p.onClick()
-		fmt.Printf("Address of clicked port (ID %d): %p", p.Id, p)
+		fmt.Printf("Address of clicked port (ID %d): %p\n", p.Id, p)
+		if p.IsInputPort {
+			fmt.Printf("Addresses of from ports (in ID:Address format): ")
+			for _, fp := range p.FromPorts {
+				fmt.Printf("%d:%p, ", fp.Id, fp)
+			}
+		} else {
+			fmt.Printf("Addresses of input ports (in ID:Address format): ")
+			for _, ip := range p.InputPorts {
+				fmt.Printf("%d:%p, ", ip.Id, ip)
+			}
+		}
+		fmt.Println()
 	}
 }

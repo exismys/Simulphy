@@ -29,12 +29,13 @@ func NewNotGate(sim *Simulation, Position rl.Vector2, Color rl.Color) *NotGate {
 		IsInputPort: true,
 	}
 	ng.OutputPort = &Port{
-		Id:         getNewPortId(),
-		Pos:        rl.NewVector2(ng.Pos.X+28, ng.Pos.Y),
-		Radius:     5,
-		Color:      rl.Orange,
-		InputPorts: []*Port{ng.InputPort},
-		ResMethod:  NOT,
+		Id:            getNewPortId(),
+		Pos:           rl.NewVector2(ng.Pos.X+28, ng.Pos.Y),
+		Radius:        5,
+		Color:         rl.Orange,
+		InputPorts:    []*Port{ng.InputPort},
+		InputPortsIds: []int32{ng.InputPort.Id},
+		ResMethod:     NOT,
 	}
 	ng.InputPort.onClick = func() {
 		fmt.Println("Input port of NOT gate clicked!")
@@ -111,8 +112,8 @@ func (ng *NotGate) HandleInput() {
 	ng.InputPort.HandleInput()
 	ng.OutputPort.HandleInput()
 	if ng.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
-		fmt.Printf("Address of the input port: %p\n", ng.InputPort)
-		fmt.Printf("Address of the output port: %p\n", ng.OutputPort)
+		fmt.Printf("Address of the input port (ID: %d): %p\n", ng.InputPortId, ng.InputPort)
+		fmt.Printf("Address of the output port (ID: %d): %p\n", ng.OutputPortId, ng.OutputPort)
 	}
 }
 
