@@ -155,7 +155,7 @@ func (sim *Simulation) Run() {
 		}
 
 		sim.HandleInput()
-		// sim.Update()
+		sim.Update()
 		sim.Render()
 	}
 }
@@ -173,7 +173,9 @@ func (sim *Simulation) HandleInput() {
 
 func (sim *Simulation) Update() {
 	for _, obj := range sim.Objects {
-		obj.update()
+		if obj.isDynamic() {
+			obj.update()
+		}
 	}
 }
 
@@ -208,6 +210,8 @@ func (sim *Simulation) setGhostObject(item string) {
 	if item == "CIRCLE" {
 		sim.GhostObject = &Circle{
 			Pos:    rl.GetMousePosition(),
+			Vel:    rl.NewVector2(0, 0),
+			Acc:    rl.NewVector2(0, 350),
 			Radius: 20,
 			Color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
 		}

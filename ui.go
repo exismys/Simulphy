@@ -121,4 +121,35 @@ func (inv *Inventory) buildButtons() {
 // UI component: TextBox
 // ----------------------------------------------------------------------
 type TextBox struct {
+	Pos        rl.Vector2
+	Visible    bool
+	saveBtn    *Button
+	onSave     func(item string)
+	ItemHeight int
+	ItemWidth  int
+}
+
+func NewTextBox(pos rl.Vector2, items []string, itemHeight int, itemWidth int, onSave func(item string)) *TextBox {
+	tb := &TextBox{
+		Pos:        pos,
+		Visible:    false,
+		onSave:     onSave,
+		ItemHeight: itemHeight,
+		ItemWidth:  itemWidth,
+	}
+	tb.buildSaveButton()
+	return tb
+}
+
+func (tb *TextBox) Draw() {
+	if !tb.Visible {
+		return
+	}
+	tb.saveBtn.Draw()
+}
+
+func (inv *TextBox) HandleInput() {
+}
+
+func (tb *TextBox) buildSaveButton() {
 }
