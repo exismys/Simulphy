@@ -101,7 +101,9 @@ func NewSimulation() *Simulation {
 	}
 	saveBtn.onClick = func() {
 		fmt.Println("The SAVE button was clicked!")
-		serialize()
+		// To Do: Create a prompt UI to prompt for filename for saving
+		// prompt()
+		serialize("circuit")
 	}
 	sim.Buttons = append(sim.Buttons, saveBtn)
 

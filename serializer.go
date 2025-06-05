@@ -20,7 +20,7 @@ type SimState struct {
 	PortMap  map[int32]*Port
 }
 
-func serialize() {
+func serialize(filename string) {
 	simState := &SimState{
 		AndGates: andGates,
 		OrGates:  orGates,
@@ -35,7 +35,11 @@ func serialize() {
 	if error != nil {
 		fmt.Println(error)
 	}
-	os.WriteFile("circuit.sim.json", s, 0644)
+	filesDir := filepath.Join(os.Getenv("HOME"), "simulphy")
+	filepath := filepath.Join(filesDir, filename+".sin.json")
+	os.Mkdir(filesDir, 0755)
+
+	os.WriteFile(filepath, s, 0644)
 }
 
 func deserialize(sim *Simulation, simStateFile string) {
