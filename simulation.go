@@ -20,6 +20,8 @@ type Simulation struct {
 	GhostObject  SimObject
 	Buttons      []*Button
 	Inventory    Inventory
+	SimStateInv  Inventory
+	SaveDialog   *SaveDialog
 	CameraOffset rl.Vector2
 }
 
@@ -67,12 +69,28 @@ func NewSimulation() *Simulation {
 	}
 	loadBtn.onClick = func() {
 		fmt.Println("The LOAD button was clicked!")
-		deserialize(sim)
 		if loadBtn.Label == "LOAD" {
+			stateFiles, err := getSimStateFiles()
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			sim.SimStateInv = *NewInventory(
+				rl.NewVector2(20+100+20, float32(simHeight)-20),
+				stateFiles,
+				50,
+				100,
+				func(item string) {
+					sim.SimStateInv.Visible = false
+					loadBtn.Label = "LOAD"
+					deserialize(sim, item)
+				},
+			)
 			loadBtn.Label = "X"
 		} else {
 			loadBtn.Label = "LOAD"
 		}
+		sim.SimStateInv.Visible = !sim.SimStateInv.Visible
 	}
 	sim.Buttons = append(sim.Buttons, loadBtn)
 
@@ -82,9 +100,30 @@ func NewSimulation() *Simulation {
 		Size:  rl.NewVector2(100, 50),
 		Label: "SAVE",
 	}
+
+	// Initialize SAVE DIALOG for filename input
+	// This is visible only after the SAVE button is clicked
+	width := 200
+	height := 50
+	sim.SaveDialog = NewSaveDialog(
+		rl.NewVector2(float32(simWidth)/2-float32(width)/2, float32(simHeight)/2-float32(height)/2),
+		height,
+		width,
+		func(filename string) {
+			saveBtn.Label = "SAVE"
+			serialize(filename)
+			sim.SaveDialog.Visible = false
+		},
+	)
 	saveBtn.onClick = func() {
 		fmt.Println("The SAVE button was clicked!")
-		serialize()
+		if saveBtn.Label == "SAVE" {
+			sim.SaveDialog.Visible = true
+			saveBtn.Label = "X"
+		} else {
+			sim.SaveDialog.Visible = false
+			saveBtn.Label = "SAVE"
+		}
 	}
 	sim.Buttons = append(sim.Buttons, saveBtn)
 
@@ -136,7 +175,7 @@ func (sim *Simulation) Run() {
 		}
 
 		sim.HandleInput()
-		// sim.Update()
+		sim.Update()
 		sim.Render()
 	}
 }
@@ -146,6 +185,8 @@ func (sim *Simulation) HandleInput() {
 		btn.HandleInput()
 	}
 	sim.Inventory.HandleInput()
+	sim.SimStateInv.HandleInput()
+	sim.SaveDialog.HandleInput()
 	for _, obj := range sim.Objects {
 		obj.HandleInput()
 	}
@@ -153,7 +194,9 @@ func (sim *Simulation) HandleInput() {
 
 func (sim *Simulation) Update() {
 	for _, obj := range sim.Objects {
-		obj.update()
+		if obj.isDynamic() {
+			obj.update()
+		}
 	}
 }
 
@@ -172,6 +215,8 @@ func (sim *Simulation) Render() {
 		btn.Draw()
 	}
 	sim.Inventory.Draw()
+	sim.SimStateInv.Draw()
+	sim.SaveDialog.Draw()
 
 	// Draw ghost object
 	if sim.GhostObject != nil {
@@ -187,6 +232,8 @@ func (sim *Simulation) setGhostObject(item string) {
 	if item == "CIRCLE" {
 		sim.GhostObject = &Circle{
 			Pos:    rl.GetMousePosition(),
+			Vel:    rl.NewVector2(0, 0),
+			Acc:    rl.NewVector2(0, 350),
 			Radius: 20,
 			Color:  rl.Color{R: 255, G: 0, B: 0, A: 128},
 		}
