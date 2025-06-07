@@ -36,7 +36,7 @@ func serialize(filename string) {
 		fmt.Println(error)
 	}
 	filesDir := filepath.Join(os.Getenv("HOME"), "simulphy")
-	filepath := filepath.Join(filesDir, filename+".sin.json")
+	filepath := filepath.Join(filesDir, filename+".sim.json")
 	os.Mkdir(filesDir, 0755)
 
 	os.WriteFile(filepath, s, 0644)

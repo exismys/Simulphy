@@ -21,6 +21,7 @@ type Simulation struct {
 	Buttons      []*Button
 	Inventory    Inventory
 	SimStateInv  Inventory
+	SaveDialog   *SaveDialog
 	CameraOffset rl.Vector2
 }
 
@@ -99,11 +100,30 @@ func NewSimulation() *Simulation {
 		Size:  rl.NewVector2(100, 50),
 		Label: "SAVE",
 	}
+
+	// Initialize SAVE DIALOG for filename input
+	// This is visible only after the SAVE button is clicked
+	width := 200
+	height := 50
+	sim.SaveDialog = NewSaveDialog(
+		rl.NewVector2(float32(simWidth)/2-float32(width)/2, float32(simHeight)/2-float32(height)/2),
+		height,
+		width,
+		func(filename string) {
+			saveBtn.Label = "SAVE"
+			serialize(filename)
+			sim.SaveDialog.Visible = false
+		},
+	)
 	saveBtn.onClick = func() {
 		fmt.Println("The SAVE button was clicked!")
-		// To Do: Create a prompt UI to prompt for filename for saving
-		// prompt()
-		serialize("circuit")
+		if saveBtn.Label == "SAVE" {
+			sim.SaveDialog.Visible = true
+			saveBtn.Label = "X"
+		} else {
+			sim.SaveDialog.Visible = false
+			saveBtn.Label = "SAVE"
+		}
 	}
 	sim.Buttons = append(sim.Buttons, saveBtn)
 
@@ -166,6 +186,7 @@ func (sim *Simulation) HandleInput() {
 	}
 	sim.Inventory.HandleInput()
 	sim.SimStateInv.HandleInput()
+	sim.SaveDialog.HandleInput()
 	for _, obj := range sim.Objects {
 		obj.HandleInput()
 	}
@@ -195,6 +216,7 @@ func (sim *Simulation) Render() {
 	}
 	sim.Inventory.Draw()
 	sim.SimStateInv.Draw()
+	sim.SaveDialog.Draw()
 
 	// Draw ghost object
 	if sim.GhostObject != nil {

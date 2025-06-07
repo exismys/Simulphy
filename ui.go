@@ -49,6 +49,68 @@ func (b *Button) HandleInput() {
 
 // ----------------------------------------------------------------------
 
+// UI component: TextBox
+// ----------------------------------------------------------------------
+type TextBox struct {
+	Pos     rl.Vector2
+	Size    rl.Vector2
+	Label   string
+	Focused bool
+}
+
+func (tb *TextBox) hovered() bool {
+	mouse := rl.GetMousePosition()
+	rect := rl.Rectangle{
+		X:      tb.Pos.X,
+		Y:      tb.Pos.Y,
+		Width:  tb.Size.X,
+		Height: tb.Size.Y,
+	}
+	return rl.CheckCollisionPointRec(mouse, rect)
+}
+
+func (tb *TextBox) Draw() {
+	bgColor := rl.DarkGray
+	fgColor := rl.LightGray
+	border := false
+	if tb.hovered() || tb.Focused {
+		border = true
+	}
+	rect := rl.NewRectangle(tb.Pos.X, tb.Pos.Y, tb.Size.X, tb.Size.Y)
+	rl.DrawRectangleRounded(rect, 0.2, 32, bgColor)
+	if border {
+		rl.DrawRectangleRoundedLines(rect, 0.2, 32, 1, rl.LightGray)
+	}
+	fontSize := 24
+	labelWidth := rl.MeasureText(tb.Label, int32(fontSize))
+	rl.DrawText(tb.Label, int32(tb.Pos.X+(tb.Size.X-float32(labelWidth))/2), int32(tb.Pos.Y+(tb.Size.Y-float32(fontSize))/2), int32(fontSize), fgColor)
+}
+
+func (tb *TextBox) HandleInput() {
+	if tb.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		tb.Focused = true
+	} else if !tb.hovered() && rl.IsMouseButtonPressed(rl.MouseButtonLeft) {
+		tb.Focused = false
+	}
+
+	// Listen to key presses when the TEXTBOX is focused and append to label
+	if tb.Focused {
+		if rl.IsKeyPressed(rl.KeyBackspace) && len(tb.Label) > 0 {
+			tb.Label = tb.Label[:len(tb.Label)-1]
+		} else {
+			key := rl.GetCharPressed()
+			for key > 0 {
+				if key >= 32 && key <= 125 {
+					tb.Label += string(rune(key))
+				}
+				key = rl.GetCharPressed()
+			}
+		}
+	}
+}
+
+// ----------------------------------------------------------------------
+
 // UI component: Inventory
 // ----------------------------------------------------------------------
 type Inventory struct {
@@ -118,38 +180,67 @@ func (inv *Inventory) buildButtons() {
 
 // ----------------------------------------------------------------------
 
-// UI component: TextBox
+// UI component: SaveDialog
 // ----------------------------------------------------------------------
-type TextBox struct {
+type SaveDialog struct {
 	Pos        rl.Vector2
 	Visible    bool
+	textBox    *TextBox
 	saveBtn    *Button
-	onSave     func(item string)
+	onSave     func(filename string)
 	ItemHeight int
 	ItemWidth  int
 }
 
-func NewTextBox(pos rl.Vector2, items []string, itemHeight int, itemWidth int, onSave func(item string)) *TextBox {
-	tb := &TextBox{
+func NewSaveDialog(pos rl.Vector2, itemHeight int, itemWidth int, onSave func(filename string)) *SaveDialog {
+	sd := &SaveDialog{
 		Pos:        pos,
 		Visible:    false,
 		onSave:     onSave,
 		ItemHeight: itemHeight,
 		ItemWidth:  itemWidth,
 	}
-	tb.buildSaveButton()
-	return tb
+	sd.buildTextBox()
+	sd.buildSaveButton()
+	return sd
 }
 
-func (tb *TextBox) Draw() {
-	if !tb.Visible {
+func (sd *SaveDialog) Draw() {
+	if !sd.Visible {
 		return
 	}
-	tb.saveBtn.Draw()
+	sd.textBox.Draw()
+	sd.saveBtn.Draw()
 }
 
-func (inv *TextBox) HandleInput() {
+func (sd *SaveDialog) HandleInput() {
+	sd.textBox.HandleInput()
+	sd.saveBtn.HandleInput()
 }
 
-func (tb *TextBox) buildSaveButton() {
+func (sd *SaveDialog) buildTextBox() {
+	initPos := rl.NewVector2(sd.Pos.X, sd.Pos.Y)
+
+	sd.textBox = &TextBox{
+		Pos:   initPos,
+		Size:  rl.NewVector2(float32(sd.ItemWidth), float32(sd.ItemHeight)),
+		Label: "",
+	}
+}
+
+func (sd *SaveDialog) buildSaveButton() {
+	// Get the top-left position of the button as sd.Pos is the top-left of textBox
+	initPos := rl.NewVector2(sd.Pos.X+float32(sd.ItemWidth)/2, sd.Pos.Y+float32(sd.ItemHeight)+10)
+	sd.saveBtn = &Button{
+		Pos:   initPos,
+		Size:  rl.NewVector2(float32(sd.ItemWidth)/2, float32(sd.ItemHeight)),
+		Label: "Save",
+		onClick: func() {
+			fmt.Println("Clicked Save")
+			if sd.textBox.Label != "" {
+				sd.Visible = false
+			}
+			sd.onSave(sd.textBox.Label)
+		},
+	}
 }
