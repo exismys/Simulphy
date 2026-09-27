@@ -1,4 +1,4 @@
-## BeLightVulkan
+## Simulphy
 
 The goal right now is to learn GPU based computer graphics using Vulkan API.
 
