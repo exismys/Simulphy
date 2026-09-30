@@ -23,7 +23,12 @@ FetchContent_Declare(glm
   SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/glm-src
 )
 
-FetchContent_MakeAvailable(glm)
+FetchContent_Declare(stb_image
+  URL https://github.com/nothings/stb/archive/refs/heads/master.zip
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/stb-src
+)
+
+FetchContent_MakeAvailable(glm stb_image)
 
 # List all source files that need to be compiled into the executable
 set(SOURCES
@@ -51,4 +56,5 @@ target_include_directories(BeLightVulkan PRIVATE
     $ENV{VULKAN_SDK}/include
     ${GLFW_INCLUDE_DIRS}
     ${CMAKE_BINARY_DIR}/_deps/glm-src
+    ${CMAKE_BINARY_DIR}/_deps/stb-src
 )
