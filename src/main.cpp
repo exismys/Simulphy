@@ -21,6 +21,8 @@ import vulkan_hpp;
 #include <cstdlib>
 #include <fstream>
 #include <chrono>
+#include <algorithm>
+#include <cmath>
 
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
@@ -140,6 +142,10 @@ class Application {
 
         bool framebufferResized = false;
         bool windowShouldClose = false;
+        bool mouseLookActive = false;
+        bool relativeMouseJustEnabled = false;
+        float cameraYaw = std::atan2(-2.0f, -2.0f);
+        float cameraPitch = std::asin(-1.0f / std::sqrt(3.0f));
 
 	    std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
 
@@ -166,6 +172,20 @@ class Application {
 	            (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE) ||
 	            (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
 	            windowShouldClose = true;
+            } else if (event.type == SDL_KEYDOWN &&
+                       event.key.keysym.sym == SDLK_TAB &&
+                       event.key.repeat == 0) {
+                const bool enableMouseLook = !mouseLookActive;
+                if (SDL_SetRelativeMouseMode(enableMouseLook ? SDL_TRUE : SDL_FALSE) != 0) {
+                    throw std::runtime_error(std::string("failed to set relative mouse mode: ") + SDL_GetError());
+                }
+                mouseLookActive = enableMouseLook;
+                if (mouseLookActive) {
+                    int relX = 0;
+                    int relY = 0;
+                    SDL_GetRelativeMouseState(&relX, &relY);
+                    relativeMouseJustEnabled = true;
+                }
 	        } else if (event.type == SDL_WINDOWEVENT &&
 	                   (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED ||
 	                    event.window.event == SDL_WINDOWEVENT_RESIZED ||
@@ -205,6 +225,7 @@ class Application {
                 while (SDL_PollEvent(&event)) {
                     processEvent(event);
                 }
+                handleRelativeMouseMovement();
                 if (windowShouldClose) {
                     break;
                 }
@@ -1013,6 +1034,27 @@ class Application {
             }
         }
 
+        void handleRelativeMouseMovement() {
+            if (!mouseLookActive) {
+                return;
+            }
+
+            int relX = 0;
+            int relY = 0;
+            SDL_GetRelativeMouseState(&relX, &relY);
+
+            if (relativeMouseJustEnabled) {
+                relX = 0;
+                relY = 0;
+                relativeMouseJustEnabled = false;
+            }
+
+            constexpr float sensitivity = 0.002f;
+            cameraYaw -= static_cast<float>(relX) * sensitivity;
+            cameraPitch -= static_cast<float>(relY) * sensitivity;
+            cameraPitch = std::clamp(cameraPitch, -1.5f, 1.5f);
+        }
+
         void updateUniformBuffer(uint32_t currentImage) {
             static auto startTime = std::chrono::high_resolution_clock::now();
             auto currentTime = std::chrono::high_resolution_clock::now();
@@ -1020,7 +1062,13 @@ class Application {
 
             UniformBufferObject ubo{};
             ubo.model = rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            ubo.view = lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            const glm::vec3 cameraPosition(2.0f, 2.0f, 2.0f);
+            const glm::vec3 cameraDirection(
+                std::cos(cameraPitch) * std::cos(cameraYaw),
+                std::cos(cameraPitch) * std::sin(cameraYaw),
+                std::sin(cameraPitch)
+            );
+            ubo.view = lookAt(cameraPosition, cameraPosition + cameraDirection, glm::vec3(0.0f, 0.0f, 1.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), 0.1f, 10.0f);
 
             memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
