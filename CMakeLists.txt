@@ -14,7 +14,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # Find required system packages using pkg-config
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(GLFW glfw3)
+pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
 
 include(FetchContent)
 
@@ -46,7 +46,7 @@ target_compile_definitions(BeLightVulkan PRIVATE
 
 # Link the required system libraries to the executable
 target_link_libraries(BeLightVulkan
-    ${GLFW_LIBRARIES}
+    PkgConfig::SDL2
     dl
 )
 
@@ -54,7 +54,6 @@ target_link_libraries(BeLightVulkan
 target_include_directories(BeLightVulkan PRIVATE
     include
     $ENV{VULKAN_SDK}/include
-    ${GLFW_INCLUDE_DIRS}
     ${CMAKE_BINARY_DIR}/_deps/glm-src
     ${CMAKE_BINARY_DIR}/_deps/stb-src
 )

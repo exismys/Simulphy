@@ -8,9 +8,9 @@ I intend to hack it into being a visual physics sandbox.
 
 Install following packages:
 
-GLFW (for windowing and framebuffer):
+SDL2 (for windowing and framebuffer):
 
-```sudo apt install libglfw3-dev```
+```sudo apt install libsdl2-dev```
 
 Vulkan SDK:
 
