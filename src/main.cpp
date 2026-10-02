@@ -65,16 +65,24 @@ const std::vector<Vertex> vertices = {
     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-    {{-0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+    {{-0.5f, -0.5f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+    {{0.5f, -0.5f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+    {{0.5f, 0.5f, -1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+    {{-0.5f, 0.5f, -1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
 };
 
 const std::vector<uint16_t> indices = {
     0, 1, 2, 2, 3, 0,
-    4, 5, 6, 6, 7, 4
+    4, 7, 6, 6, 5, 4,
+
+    4, 0, 3, 3, 7, 4,
+    1, 5, 6, 6, 2, 1,
+
+    4, 5, 1, 1, 0, 4,
+    3, 2, 6, 6, 7, 3
 };
+
+const glm::vec3 cameraPos = {0, 5, 2};
 
 struct UniformBufferObject{
     glm::mat4 model;
@@ -144,8 +152,8 @@ class Application {
         bool windowShouldClose = false;
         bool mouseLookActive = false;
         bool relativeMouseJustEnabled = false;
-        float cameraYaw = std::atan2(-2.0f, -2.0f);
-        float cameraPitch = std::asin(-1.0f / std::sqrt(3.0f));
+        float cameraYaw = std::atan2(-cameraPos.z, -cameraPos.x);
+        float cameraPitch = std::asin(-cameraPos.y / glm::length((glm::vec3{0, 0, 0} - cameraPos)));
 
 	    std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
 
@@ -1061,14 +1069,16 @@ class Application {
             float time = std::chrono::duration<float>(currentTime - startTime).count();
 
             UniformBufferObject ubo{};
-            ubo.model = rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-            const glm::vec3 cameraPosition(2.0f, 2.0f, 2.0f);
+            ubo.model = 
+                        rotate(glm::mat4(1.0f), time * glm::radians(5.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
+                        rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+
             const glm::vec3 cameraDirection(
                 std::cos(cameraPitch) * std::cos(cameraYaw),
-                std::cos(cameraPitch) * std::sin(cameraYaw),
-                std::sin(cameraPitch)
+                std::sin(cameraPitch),
+                std::cos(cameraPitch) * std::sin(cameraYaw)
             );
-            ubo.view = lookAt(cameraPosition, cameraPosition + cameraDirection, glm::vec3(0.0f, 0.0f, 1.0f));
+            ubo.view = lookAt(cameraPos, cameraPos + cameraDirection, glm::vec3(0.0f, 1.0f, 0.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), 0.1f, 10.0f);
 
             memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
