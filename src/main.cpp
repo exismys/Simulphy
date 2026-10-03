@@ -1,3 +1,4 @@
+#include "glm/geometric.hpp"
 #include "vulkan/vulkan.hpp"
 #if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
 #include <vulkan/vulkan_raii.hpp>
@@ -82,7 +83,8 @@ const std::vector<uint16_t> indices = {
     3, 2, 6, 6, 7, 3
 };
 
-const glm::vec3 cameraPos = {0, 5, 2};
+constexpr glm::vec3 cameraPosition = {0, 4, 2};
+constexpr glm::vec3 targetPosition = {0, 0, 0};
 
 struct UniformBufferObject{
     glm::mat4 model;
@@ -152,8 +154,11 @@ class Application {
         bool windowShouldClose = false;
         bool mouseLookActive = false;
         bool relativeMouseJustEnabled = false;
-        float cameraYaw = std::atan2(-cameraPos.z, -cameraPos.x);
-        float cameraPitch = std::asin(-cameraPos.y / glm::length((glm::vec3{0, 0, 0} - cameraPos)));
+
+        glm::vec3 normalizedDir = glm::normalize(targetPosition - cameraPosition);
+
+        float cameraYaw = std::atan2(normalizedDir.x, normalizedDir.z);
+        float cameraPitch = std::asin(normalizedDir.y);
 
 	    std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
 
@@ -1059,7 +1064,9 @@ class Application {
 
             constexpr float sensitivity = 0.002f;
             cameraYaw -= static_cast<float>(relX) * sensitivity;
+            // std::cout << "cameraYaw: " << cameraYaw << std::endl;
             cameraPitch -= static_cast<float>(relY) * sensitivity;
+            // std::cout << "cameraPitch: " << cameraPitch << std::endl;
             cameraPitch = std::clamp(cameraPitch, -1.5f, 1.5f);
         }
 
@@ -1070,15 +1077,15 @@ class Application {
 
             UniformBufferObject ubo{};
             ubo.model = 
-                        rotate(glm::mat4(1.0f), time * glm::radians(5.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
-                        rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                        rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
+                        rotate(glm::mat4(1.0f), time * glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
             const glm::vec3 cameraDirection(
-                std::cos(cameraPitch) * std::cos(cameraYaw),
+                std::cos(cameraPitch) * std::sin(cameraYaw),
                 std::sin(cameraPitch),
-                std::cos(cameraPitch) * std::sin(cameraYaw)
+                std::cos(cameraPitch) * std::cos(cameraYaw)
             );
-            ubo.view = lookAt(cameraPos, cameraPos + cameraDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+            ubo.view = lookAt(cameraPosition, cameraPosition + cameraDirection, glm::vec3(0.0f, 1.0f, 0.0f));
             ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), 0.1f, 10.0f);
 
             memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
