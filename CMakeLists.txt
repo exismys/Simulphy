@@ -34,7 +34,12 @@ FetchContent_Declare(imgui
   SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/imgui-src
 )
 
-FetchContent_MakeAvailable(glm stb_image imgui)
+FetchContent_Declare(tinyobjloader
+  URL https://github.com/tinyobjloader/tinyobjloader/archive/refs/tags/v2.0.0rc13.tar.gz
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/tinyobjloader-src
+)
+
+FetchContent_MakeAvailable(glm stb_image imgui tinyobjloader)
 
 # List all source files that need to be compiled into the executable
 set(SOURCES
@@ -63,6 +68,7 @@ target_compile_definitions(BeLightVulkan PRIVATE
 target_link_libraries(BeLightVulkan
     PkgConfig::SDL2
     Vulkan::Vulkan
+    tinyobjloader
     dl
 )
 
