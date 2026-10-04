@@ -1,18 +1,17 @@
-#include "glm/geometric.hpp"
-#include "vulkan/vulkan.hpp"
-#if defined(__INTELLISENSE__) || !defined(USE_CPP20_MODULES)
 #include <vulkan/vulkan_raii.hpp>
-#else
-import vulkan_hpp;
-#endif
 
 #include <SDL.h>
 #include <SDL_vulkan.h>
+
+#include <imgui.h>
+#include <imgui_impl_sdl2.h>
+#include <imgui_impl_vulkan.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/geometric.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -116,11 +115,13 @@ class Application {
         vk::raii::SwapchainKHR swapChain = nullptr;
         std::vector<vk::Image> swapChainImages;
         std::vector<vk::raii::ImageView> swapChainImageViews;
+        VkFormat imguiColorFormat = VK_FORMAT_UNDEFINED;
 
         vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
         vk::raii::PipelineLayout pipelineLayout = nullptr;
         vk::raii::Pipeline graphicsPipeline = nullptr;
 
+        vk::Format depthFormat;
         vk::raii::Image depthImage = nullptr;
         vk::raii::DeviceMemory depthImageMemory = nullptr;
         vk::raii::ImageView depthImageView = nullptr;
@@ -230,12 +231,14 @@ class Application {
             createDescriptorSets();
             createCommandBuffer();
             createSyncObjects();
+            initImGui();
         }
 
         void mainLoop() {
             while (!windowShouldClose) {
                 SDL_Event event;
                 while (SDL_PollEvent(&event)) {
+                    ImGui_ImplSDL2_ProcessEvent(&event);
                     processEvent(event);
                 }
                 handleRelativeMouseMovement();
@@ -253,6 +256,9 @@ class Application {
 	    }
 
         void cleanup() {
+            ImGui_ImplVulkan_Shutdown();
+            ImGui_ImplSDL2_Shutdown();
+            ImGui::DestroyContext();
             cleanupSwapChain();
 
             SDL_DestroyWindow(window);
@@ -267,8 +273,10 @@ class Application {
                 if (!SDL_WaitEvent(&event)) {
                     throw std::runtime_error(std::string("failed to wait for SDL event: ") + SDL_GetError());
                 }
+                ImGui_ImplSDL2_ProcessEvent(&event);
                 processEvent(event);
                 while (SDL_PollEvent(&event)) {
+                    ImGui_ImplSDL2_ProcessEvent(&event);
                     processEvent(event);
                 }
                 SDL_Vulkan_GetDrawableSize(window, &width, &height);
@@ -278,12 +286,54 @@ class Application {
             }
 
             device.waitIdle();
+            ImGui_ImplVulkan_Shutdown();
 
             cleanupSwapChain();
+
             createSwapChain();
             createImageViews();
             createDepthResources();
+            initImGuiVulkan();
 	    }
+
+        void initImGui() {
+            IMGUI_CHECKVERSION();
+            ImGui::CreateContext();
+
+            ImGuiIO& io = ImGui::GetIO();
+            io.IniFilename = nullptr;
+
+            ImGui::StyleColorsDark();
+
+            if (!ImGui_ImplSDL2_InitForVulkan(window)) {
+                throw std::runtime_error("failed to initialize ImGui SDL2 backend!");
+            }
+            initImGuiVulkan();
+        }
+
+        void initImGuiVulkan() {
+            imguiColorFormat = static_cast<VkFormat>(swapChainSurfaceFormat.format);
+            ImGui_ImplVulkan_InitInfo initInfo{};
+            initInfo.ApiVersion = VK_API_VERSION_1_3;
+            initInfo.Instance = static_cast<VkInstance>(*instance);
+            initInfo.PhysicalDevice = static_cast<VkPhysicalDevice>(*physicalDevice);
+            initInfo.Device = static_cast<VkDevice>(*device);
+            initInfo.QueueFamily = queueIndex;
+            initInfo.Queue = static_cast<VkQueue>(*graphicsQueue);
+            initInfo.DescriptorPoolSize = 1000;
+            initInfo.MinImageCount = 2;
+            initInfo.ImageCount = static_cast<uint32_t>(swapChainImages.size());
+            initInfo.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+            initInfo.UseDynamicRendering = true;
+            initInfo.PipelineRenderingCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO;
+            initInfo.PipelineRenderingCreateInfo.colorAttachmentCount = 1;
+            initInfo.PipelineRenderingCreateInfo.pColorAttachmentFormats = &imguiColorFormat;
+            initInfo.PipelineRenderingCreateInfo.depthAttachmentFormat = static_cast<VkFormat>(depthFormat);
+
+            if (!ImGui_ImplVulkan_Init(&initInfo)) {
+                throw std::runtime_error("failed to initialize ImGui Vulkan backend!");
+            }
+        }
 
         void createInstance() {
             std::vector<char const*> requiredLayers;
@@ -651,7 +701,7 @@ class Application {
                 .pColorAttachmentFormats = &swapChainSurfaceFormat.format 
             };
 
-            vk::Format depthFormat = findDepthFormat();
+            depthFormat = findDepthFormat();
 
             vk::StructureChain<vk::GraphicsPipelineCreateInfo, vk::PipelineRenderingCreateInfo> pipelineCreateInfoChain = {
                 {
@@ -1110,6 +1160,7 @@ class Application {
 		    }
 
             updateUniformBuffer(frameIndex);
+            renderImGui();
 
             device.resetFences(*inFlightFences[frameIndex]);
 
@@ -1146,6 +1197,25 @@ class Application {
             }
 
             frameIndex = (frameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+        }
+
+        void renderImGui() {
+            ImGui_ImplVulkan_NewFrame();
+            ImGui_ImplSDL2_NewFrame();
+            ImGui::NewFrame();
+
+            const ImGuiIO &io = ImGui::GetIO();
+            ImGui::SetNextWindowPos(ImVec2(10.0f, 10.0f), ImGuiCond_Always);
+            ImGui::SetNextWindowBgAlpha(0.35f);
+            ImGui::Begin("Frame rate", nullptr,
+                         ImGuiWindowFlags_NoDecoration |
+                         ImGuiWindowFlags_AlwaysAutoResize |
+                         ImGuiWindowFlags_NoSavedSettings |
+                         ImGuiWindowFlags_NoFocusOnAppearing |
+                         ImGuiWindowFlags_NoNav);
+            ImGui::Text("FPS: %.1f", io.Framerate);
+            ImGui::End();
+            ImGui::Render();
         }
 
         void recordCommandBuffer(uint32_t imageIndex) {
@@ -1205,6 +1275,7 @@ class Application {
             commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swapChainExtent));
             commandBuffers[frameIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, *descriptorSets[frameIndex], nullptr);
             commandBuffer.drawIndexed(static_cast<uint32_t>(indices.size()), 1, 0, 0, 0);
+            ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), static_cast<VkCommandBuffer>(*commandBuffer));
             commandBuffer.endRendering();
 
             transition_image_layout(

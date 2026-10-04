@@ -15,6 +15,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Find required system packages using pkg-config
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2)
+find_package(Vulkan REQUIRED)
 
 include(FetchContent)
 
@@ -28,7 +29,12 @@ FetchContent_Declare(stb_image
   SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/stb-src
 )
 
-FetchContent_MakeAvailable(glm stb_image)
+FetchContent_Declare(imgui
+  URL https://github.com/ocornut/imgui/archive/refs/tags/v1.91.9.tar.gz
+  SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/imgui-src
+)
+
+FetchContent_MakeAvailable(glm stb_image imgui)
 
 # List all source files that need to be compiled into the executable
 set(SOURCES
@@ -37,6 +43,15 @@ set(SOURCES
 
 # Create the executable target named "BeLightVulkan" from the specified source files
 add_executable(BeLightVulkan ${SOURCES})
+
+target_sources(BeLightVulkan PRIVATE
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_sdl2.cpp
+    ${imgui_SOURCE_DIR}/backends/imgui_impl_vulkan.cpp
+)
 
 # Enable Vulkan-Hpp designated initializers
 target_compile_definitions(BeLightVulkan PRIVATE
@@ -47,6 +62,7 @@ target_compile_definitions(BeLightVulkan PRIVATE
 # Link the required system libraries to the executable
 target_link_libraries(BeLightVulkan
     PkgConfig::SDL2
+    Vulkan::Vulkan
     dl
 )
 
@@ -56,4 +72,6 @@ target_include_directories(BeLightVulkan PRIVATE
     $ENV{VULKAN_SDK}/include
     ${CMAKE_BINARY_DIR}/_deps/glm-src
     ${CMAKE_BINARY_DIR}/_deps/stb-src
+    ${imgui_SOURCE_DIR}
+    ${imgui_SOURCE_DIR}/backends
 )
