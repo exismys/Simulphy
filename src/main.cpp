@@ -15,6 +15,8 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
 
 #include <iostream>
 #include <stdexcept>
@@ -115,6 +117,7 @@ class Application {
         vk::raii::SwapchainKHR swapChain = nullptr;
         std::vector<vk::Image> swapChainImages;
         std::vector<vk::raii::ImageView> swapChainImageViews;
+
         VkFormat imguiColorFormat = VK_FORMAT_UNDEFINED;
 
         vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
@@ -155,6 +158,9 @@ class Application {
         bool windowShouldClose = false;
         bool mouseLookActive = false;
         bool relativeMouseJustEnabled = false;
+
+        bool canCaptureFrame = false;
+        bool saveFrameRequested = false;
 
         glm::vec3 normalizedDir = glm::normalize(targetPosition - cameraPosition);
 
@@ -541,6 +547,15 @@ class Application {
             std::vector<vk::SurfaceFormatKHR> availableFormats = physicalDevice.getSurfaceFormatsKHR(*surface);
             swapChainSurfaceFormat = chooseSwapSurfaceFormat(availableFormats);
 
+            const bool hasSupportedPixelFormat = swapChainSurfaceFormat.format == vk::Format::eB8G8R8A8Srgb ||
+                                                 swapChainSurfaceFormat.format == vk::Format::eB8G8R8A8Unorm ||
+                                                 swapChainSurfaceFormat.format == vk::Format::eR8G8B8A8Srgb ||
+                                                 swapChainSurfaceFormat.format == vk::Format::eR8G8B8A8Unorm;
+            const auto formatProperties = physicalDevice.getFormatProperties(swapChainSurfaceFormat.format);
+            canCaptureFrame = (surfaceCapabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferSrc) &&
+                              (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) &&
+                              hasSupportedPixelFormat;
+
             std::vector<vk::PresentModeKHR> availablePresentModes = physicalDevice.getSurfacePresentModesKHR(*surface);
 		    vk::PresentModeKHR presentMode = chooseSwapPresentMode(availablePresentModes);
 
@@ -551,7 +566,8 @@ class Application {
                 .imageColorSpace  = swapChainSurfaceFormat.colorSpace,
                 .imageExtent      = swapChainExtent,
                 .imageArrayLayers = 1,
-                .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment,
+                .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment |
+                                    (canCaptureFrame ? vk::ImageUsageFlagBits::eTransferSrc : vk::ImageUsageFlags{}),
                 .imageSharingMode = vk::SharingMode::eExclusive,
                 .preTransform     = surfaceCapabilities.currentTransform,
                 .compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque,
@@ -1162,10 +1178,22 @@ class Application {
             updateUniformBuffer(frameIndex);
             renderImGui();
 
+            const bool captureFrame = saveFrameRequested && canCaptureFrame;
+            saveFrameRequested = false;
+
+            vk::raii::Buffer captureBuffer = nullptr;
+            vk::raii::DeviceMemory captureBufferMemory = nullptr;
+            if (captureFrame) {
+                const vk::DeviceSize captureSize = static_cast<vk::DeviceSize>(swapChainExtent.width) * swapChainExtent.height * 4;
+                std::tie(captureBuffer, captureBufferMemory) = createBuffer(captureSize,
+                                                                                     vk::BufferUsageFlagBits::eTransferDst,
+                                                                                     vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+            }
+
             device.resetFences(*inFlightFences[frameIndex]);
 
             commandBuffers[frameIndex].reset();
-		    recordCommandBuffer(imageIndex);
+		    recordCommandBuffer(imageIndex, captureFrame ? &*captureBuffer : nullptr);
 
 		    vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
 		    const vk::SubmitInfo   submitInfo{
@@ -1178,6 +1206,14 @@ class Application {
                 .pSignalSemaphores    = &*renderFinishedSemaphores[imageIndex]
             };
 		    graphicsQueue.submit(submitInfo, *inFlightFences[frameIndex]);
+
+            if (captureFrame) {
+                auto fenceResult = device.waitForFences(*inFlightFences[frameIndex], vk::True, UINT64_MAX);
+                if (fenceResult != vk::Result::eSuccess) {
+                    throw std::runtime_error("failed to wait for captured frame!");
+                }
+                saveFrameToPng(captureBufferMemory);
+            }
 
 		    const vk::PresentInfoKHR presentInfoKHR{
                 .waitSemaphoreCount = 1, 
@@ -1214,11 +1250,48 @@ class Application {
                          ImGuiWindowFlags_NoFocusOnAppearing |
                          ImGuiWindowFlags_NoNav);
             ImGui::Text("FPS: %.1f", io.Framerate);
+            if (!canCaptureFrame) {
+                ImGui::BeginDisabled();
+            }
+            if (ImGui::Button("save frame")) {
+                saveFrameRequested = true;
+            }
+            if (!canCaptureFrame) {
+                ImGui::EndDisabled();
+                ImGui::TextDisabled("Frame capture is not supported");
+            }
             ImGui::End();
             ImGui::Render();
         }
 
-        void recordCommandBuffer(uint32_t imageIndex) {
+        void saveFrameToPng(vk::raii::DeviceMemory &captureMemory) {
+            const uint32_t width = swapChainExtent.width;
+            const uint32_t height = swapChainExtent.height;
+            const size_t pixelCount = static_cast<size_t>(width) * height;
+            std::vector<unsigned char> pixels(pixelCount * 4);
+
+            void *mapped = captureMemory.mapMemory(0, pixels.size());
+            memcpy(pixels.data(), mapped, pixels.size());
+            captureMemory.unmapMemory();
+
+            const bool isBgra = swapChainSurfaceFormat.format == vk::Format::eB8G8R8A8Srgb ||
+                                swapChainSurfaceFormat.format == vk::Format::eB8G8R8A8Unorm;
+            if (isBgra) {
+                for (size_t i = 0; i < pixelCount; ++i) {
+                    std::swap(pixels[i * 4], pixels[i * 4 + 2]);
+                }
+            }
+
+            if (width > static_cast<uint32_t>(std::numeric_limits<int>::max() / 4) ||
+                height > static_cast<uint32_t>(std::numeric_limits<int>::max()) ||
+                stbi_write_png("frame.png", static_cast<int>(width), static_cast<int>(height), 4,
+                               pixels.data(), static_cast<int>(width * 4)) == 0) {
+                throw std::runtime_error("failed to save frame.png!");
+            }
+            std::cout << "Saved frame to frame.png" << std::endl;
+        }
+
+        void recordCommandBuffer(uint32_t imageIndex, const vk::Buffer *captureBuffer) {
             auto &commandBuffer = commandBuffers[frameIndex];
 
 		    commandBuffer.begin({});
@@ -1278,16 +1351,68 @@ class Application {
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), static_cast<VkCommandBuffer>(*commandBuffer));
             commandBuffer.endRendering();
 
-            transition_image_layout(
-                swapChainImages[imageIndex],
-                vk::ImageLayout::eColorAttachmentOptimal,
-                vk::ImageLayout::ePresentSrcKHR,
-                vk::AccessFlagBits2::eColorAttachmentWrite,
-                {},
-                vk::PipelineStageFlagBits2::eColorAttachmentOutput,
-                vk::PipelineStageFlagBits2::eBottomOfPipe,
-                vk::ImageAspectFlagBits::eColor
-            );
+            if (captureBuffer) {
+                transition_image_layout(
+                    swapChainImages[imageIndex],
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::ImageLayout::eTransferSrcOptimal,
+                    vk::AccessFlagBits2::eColorAttachmentWrite,
+                    vk::AccessFlagBits2::eTransferRead,
+                    vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                    vk::PipelineStageFlagBits2::eTransfer,
+                    vk::ImageAspectFlagBits::eColor
+                );
+                vk::BufferImageCopy copyRegion{
+                    .imageSubresource = {
+                        .aspectMask = vk::ImageAspectFlagBits::eColor,
+                        .mipLevel = 0,
+                        .baseArrayLayer = 0,
+                        .layerCount = 1
+                    },
+                    .imageExtent = {swapChainExtent.width, swapChainExtent.height, 1}
+                };
+                commandBuffer.copyImageToBuffer(swapChainImages[imageIndex],
+                                                vk::ImageLayout::eTransferSrcOptimal,
+                                                *captureBuffer,
+                                                copyRegion);
+                vk::BufferMemoryBarrier2 captureBarrier{
+                    .srcStageMask = vk::PipelineStageFlagBits2::eTransfer,
+                    .srcAccessMask = vk::AccessFlagBits2::eTransferWrite,
+                    .dstStageMask = vk::PipelineStageFlagBits2::eHost,
+                    .dstAccessMask = vk::AccessFlagBits2::eHostRead,
+                    .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+                    .buffer = *captureBuffer,
+                    .offset = 0,
+                    .size = VK_WHOLE_SIZE
+                };
+                vk::DependencyInfo captureDependency{
+                    .bufferMemoryBarrierCount = 1,
+                    .pBufferMemoryBarriers = &captureBarrier
+                };
+                commandBuffer.pipelineBarrier2(captureDependency);
+                transition_image_layout(
+                    swapChainImages[imageIndex],
+                    vk::ImageLayout::eTransferSrcOptimal,
+                    vk::ImageLayout::ePresentSrcKHR,
+                    vk::AccessFlagBits2::eTransferRead,
+                    {},
+                    vk::PipelineStageFlagBits2::eTransfer,
+                    vk::PipelineStageFlagBits2::eBottomOfPipe,
+                    vk::ImageAspectFlagBits::eColor
+                );
+            } else {
+                transition_image_layout(
+                    swapChainImages[imageIndex],
+                    vk::ImageLayout::eColorAttachmentOptimal,
+                    vk::ImageLayout::ePresentSrcKHR,
+                    vk::AccessFlagBits2::eColorAttachmentWrite,
+                    {},
+                    vk::PipelineStageFlagBits2::eColorAttachmentOutput,
+                    vk::PipelineStageFlagBits2::eBottomOfPipe,
+                    vk::ImageAspectFlagBits::eColor
+                );
+            }
 		    commandBuffer.end();
 	    }
 

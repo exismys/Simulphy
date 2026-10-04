@@ -4,6 +4,11 @@ The goal right now is to learn GPU based computer graphics using Vulkan API.
 
 I intend to hack it into being a visual physics sandbox.
 
+## Rendered Scenes
+
+### Textured Cube
+![Textured Cube](renders/textured-cube.png)
+
 ## Dependencies
 
 Install following packages:
