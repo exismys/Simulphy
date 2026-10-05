@@ -12,6 +12,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/geometric.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/hash.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -28,6 +30,7 @@
 #include <chrono>
 #include <algorithm>
 #include <cmath>
+#include <unordered_map>
 
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
@@ -64,6 +67,17 @@ struct Vertex {
                 {.location = 2, .binding = 0, .format = vk::Format::eR32G32Sfloat, .offset = offsetof(Vertex, texCoord)}
             }
         };
+	}
+
+    bool operator==(const Vertex &other) const {
+		return pos == other.pos && color == other.color && texCoord == other.texCoord;
+	}
+};
+
+template <>
+struct std::hash<Vertex> {
+	size_t operator()(Vertex const &vertex) const noexcept {
+		return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
 	}
 };
 
@@ -959,6 +973,8 @@ class Application {
                 throw std::runtime_error(warn + err);
 		    }
 
+            std::unordered_map<Vertex, uint32_t> uniqueVertices{};
+
             for (const auto &shape : shapes) {
                 for (const auto &index : shape.mesh.indices) {
                     Vertex vertex{};
@@ -976,8 +992,12 @@ class Application {
 
                     vertex.color = {1.0f, 1.0f, 1.0f};
 
-                    vertices.push_back(vertex);
-                    indices.push_back(indices.size());
+                    auto [it, inserted] = uniqueVertices.insert({vertex, static_cast<uint32_t>(vertices.size())});
+                    if (inserted) {
+                        vertices.push_back(vertex);
+                    }
+
+                    indices.push_back(it->second);
                 }
             }
         }
