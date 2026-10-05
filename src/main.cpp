@@ -18,6 +18,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <stb_image_write.h>
 
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
 #include <iostream>
 #include <stdexcept>
 #include <cstdlib>
@@ -28,6 +31,9 @@
 
 constexpr uint32_t WIDTH = 800;
 constexpr uint32_t HEIGHT = 600;
+
+const std::string  MODEL_PATH = "models/viking_room.obj";
+const std::string  TEXTURE_PATH = "textures/viking_room.png";
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -61,30 +67,30 @@ struct Vertex {
 	}
 };
 
-const std::vector<Vertex> vertices = {
-    {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
+// const std::vector<Vertex> vertices = {
+//     {{-0.5f, -0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+//     {{0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+//     {{0.5f, 0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+//     {{-0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}},
 
-    {{-0.5f, -0.5f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
-    {{0.5f, -0.5f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
-    {{0.5f, 0.5f, -1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
-    {{-0.5f, 0.5f, -1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
-};
+//     {{-0.5f, -0.5f, -1.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+//     {{0.5f, -0.5f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+//     {{0.5f, 0.5f, -1.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+//     {{-0.5f, 0.5f, -1.0f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+// };
 
-const std::vector<uint16_t> indices = {
-    0, 1, 2, 2, 3, 0,
-    4, 7, 6, 6, 5, 4,
+// const std::vector<uint16_t> indices = {
+//     0, 1, 2, 2, 3, 0,
+//     4, 7, 6, 6, 5, 4,
 
-    4, 0, 3, 3, 7, 4,
-    1, 5, 6, 6, 2, 1,
+//     4, 0, 3, 3, 7, 4,
+//     1, 5, 6, 6, 2, 1,
 
-    4, 5, 1, 1, 0, 4,
-    3, 2, 6, 6, 7, 3
-};
+//     4, 5, 1, 1, 0, 4,
+//     3, 2, 6, 6, 7, 3
+// };
 
-constexpr glm::vec3 cameraPosition = {0, 4, 2};
+constexpr glm::vec3 cameraPosition = {0, 2, 2};
 constexpr glm::vec3 targetPosition = {0, 0, 0};
 
 struct UniformBufferObject{
@@ -134,6 +140,8 @@ class Application {
         vk::raii::ImageView textureImageView = nullptr;
         vk::raii::Sampler textureSampler = nullptr;
 
+        std::vector<Vertex> vertices;
+        std::vector<uint32_t> indices;
         vk::raii::Buffer vertexBuffer  = nullptr;
 	    vk::raii::DeviceMemory vertexBufferMemory = nullptr;
         vk::raii::Buffer indexBuffer = nullptr;
@@ -230,6 +238,7 @@ class Application {
             createTextureImage();
             createTextureImageView();
             createTextureSampler();
+            loadModel();
             createVertexBuffer();
             createIndexBuffer();
             createUniformBuffers();
@@ -805,7 +814,7 @@ class Application {
 
         void createTextureImage() {
             int texWidth, texHeight, texChannels;
-            stbi_uc *pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            stbi_uc *pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
             vk::DeviceSize imageSize = texWidth * texHeight * 4;
 
             if (!pixels) {
@@ -939,6 +948,39 @@ class Application {
             };
             commandBuffer.copyBufferToImage(buffer, image, vk::ImageLayout::eTransferDstOptimal, region);
 	    }
+
+        void loadModel() {
+            tinyobj::attrib_t attrib;
+            std::vector<tinyobj::shape_t> shapes;
+            std::vector<tinyobj::material_t> materials;
+            std::string warn, err;
+
+            if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, MODEL_PATH.c_str())) {
+                throw std::runtime_error(warn + err);
+		    }
+
+            for (const auto &shape : shapes) {
+                for (const auto &index : shape.mesh.indices) {
+                    Vertex vertex{};
+
+                    vertex.pos = {
+                        attrib.vertices[3 * index.vertex_index + 0],
+                        attrib.vertices[3 * index.vertex_index + 1],
+                        attrib.vertices[3 * index.vertex_index + 2]
+                    };
+
+                    vertex.texCoord = {
+                        attrib.texcoords[2 * index.texcoord_index + 0],
+                        1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
+                    };
+
+                    vertex.color = {1.0f, 1.0f, 1.0f};
+
+                    vertices.push_back(vertex);
+                    indices.push_back(indices.size());
+                }
+            }
+        }
 
 
         std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> createBuffer(vk::DeviceSize size, 
@@ -1143,8 +1185,9 @@ class Application {
 
             UniformBufferObject ubo{};
             ubo.model = 
+                        rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
                         rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
-                        rotate(glm::mat4(1.0f), time * glm::radians(30.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                        rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
             const glm::vec3 cameraDirection(
                 std::cos(cameraPitch) * std::sin(cameraYaw),
@@ -1343,7 +1386,7 @@ class Application {
             commandBuffer.beginRendering(renderingInfo);
             commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *graphicsPipeline);
             commandBuffer.bindVertexBuffers(0, *vertexBuffer, {0});
-            commandBuffers[frameIndex].bindIndexBuffer(*indexBuffer, 0, vk::IndexType::eUint16);
+            commandBuffers[frameIndex].bindIndexBuffer(*indexBuffer, 0, vk::IndexTypeValue<decltype(indices)::value_type>::value);
             commandBuffer.setViewport(0, vk::Viewport(0.0f, static_cast<float>(swapChainExtent.height), static_cast<float>(swapChainExtent.width), -static_cast<float>(swapChainExtent.height), 0.0f, 1.0f));
             commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swapChainExtent));
             commandBuffers[frameIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipelineLayout, 0, *descriptorSets[frameIndex], nullptr);
