@@ -958,7 +958,9 @@ class Application {
                 .anisotropyEnable = vk::True,
                 .maxAnisotropy    = properties.limits.maxSamplerAnisotropy,
                 .compareEnable    = vk::False,
-                .compareOp        = vk::CompareOp::eAlways
+                .compareOp        = vk::CompareOp::eAlways,
+                .minLod           = 0.0f,
+		        .maxLod           = vk::LodClampNone
             };
             textureSampler = vk::raii::Sampler(device, samplerInfo);
 	    }
