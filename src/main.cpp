@@ -32,11 +32,11 @@
 #include <cmath>
 #include <unordered_map>
 
-constexpr uint32_t WIDTH = 800;
-constexpr uint32_t HEIGHT = 600;
+constexpr uint32_t WIDTH = 1200;
+constexpr uint32_t HEIGHT = 720;
 
-const std::string  MODEL_PATH = "models/viking_room.obj";
-const std::string  TEXTURE_PATH = "textures/viking_room.png";
+const std::string  MODEL_PATH = "models/test-models/MenlogateLow.obj";
+const std::string  TEXTURE_PATH = "textures/test-textures/Menlogate.jpg";
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -104,7 +104,7 @@ struct std::hash<Vertex> {
 //     3, 2, 6, 6, 7, 3
 // };
 
-constexpr glm::vec3 cameraPosition = {0, 2, 2};
+constexpr glm::vec3 cameraPosition = {0, 2, 15};
 constexpr glm::vec3 targetPosition = {0, 0, 0};
 
 struct UniformBufferObject{
@@ -541,7 +541,7 @@ class Application {
             //     return vk::SampleCountFlagBits::e2;
             // }
 
-            return vk::SampleCountFlagBits::e4;
+            return vk::SampleCountFlagBits::e2;
 	    }
 
         void createSurface() {
@@ -897,13 +897,13 @@ class Application {
             stbi_image_free(pixels);
 
             std::tie(textureImage, textureImageMemory) = createImage(texWidth,
-                                                                    texHeight,
-                                                                    mipLevels,
-                                                                    vk::SampleCountFlagBits::e1,
-                                                                    vk::Format::eR8G8B8A8Srgb,
-                                                                    vk::ImageTiling::eOptimal,
-                                                                    vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
-                                                                    vk::MemoryPropertyFlagBits::eDeviceLocal);
+                                                                              texHeight,
+                                                                              mipLevels,
+                                                                              vk::SampleCountFlagBits::e1,
+                                                                              vk::Format::eR8G8B8A8Srgb,
+                                                                              vk::ImageTiling::eOptimal,
+                                                                              vk::ImageUsageFlagBits::eTransferSrc | vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled,
+                                                                              vk::MemoryPropertyFlagBits::eDeviceLocal);
 
             vk::raii::CommandBuffer commandBuffer = beginSingleTimeCommands();
             transitionImageLayout(commandBuffer, textureImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, mipLevels);
@@ -1334,10 +1334,10 @@ class Application {
             float time = std::chrono::duration<float>(currentTime - startTime).count();
 
             UniformBufferObject ubo{};
-            ubo.model = 
-                        rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
-                        rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
-                        rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+            ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+                        // rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
+                        // rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
+                        // rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 
             const glm::vec3 cameraDirection(
                 std::cos(cameraPitch) * std::sin(cameraYaw),
@@ -1345,7 +1345,7 @@ class Application {
                 std::cos(cameraPitch) * std::cos(cameraYaw)
             );
             ubo.view = lookAt(cameraPosition, cameraPosition + cameraDirection, glm::vec3(0.0f, 1.0f, 0.0f));
-            ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), 0.1f, 10.0f);
+            ubo.proj = glm::perspective(glm::radians(45.0f), static_cast<float>(swapChainExtent.width) / static_cast<float>(swapChainExtent.height), 0.1f, 100.0f);
 
             memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 	    }
@@ -1443,6 +1443,8 @@ class Application {
                          ImGuiWindowFlags_NoFocusOnAppearing |
                          ImGuiWindowFlags_NoNav);
             ImGui::Text("FPS: %.1f", io.Framerate);
+            ImGui::Text("Number of Vertices: %s", formatNumberLocale(static_cast<int>(vertices.size())).c_str());
+            ImGui::Text("Number of Triangles: %s", formatNumberLocale(static_cast<int>(indices.size() / 3)).c_str());
             if (!canCaptureFrame) {
                 ImGui::BeginDisabled();
             }
@@ -1455,6 +1457,13 @@ class Application {
             }
             ImGui::End();
             ImGui::Render();
+        }
+
+        std::string formatNumberLocale(int number) {
+            std::stringstream ss;
+            ss.imbue(std::locale("en_US.UTF-8"));
+            ss << std::fixed << number;
+            return ss.str();
         }
 
         void saveFrameToPng(vk::raii::DeviceMemory &captureMemory) {
