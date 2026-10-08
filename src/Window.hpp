@@ -7,6 +7,9 @@
 
 namespace Simulphy {
 
+    // ---------------------------------------------------------
+    // Initialize and destroy SDL window
+    // ---------------------------------------------------------
     class Window {
         private:
             SDL_Window *window = nullptr;
