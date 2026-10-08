@@ -31,6 +31,7 @@
 #include <unordered_map>
 
 #include "Vertex.hpp"
+#include "Window.hpp"
 
 constexpr uint32_t WIDTH = 1200;
 constexpr uint32_t HEIGHT = 720;
@@ -85,14 +86,13 @@ struct UniformBufferObject{
 class Application {
     public:
         void run() {
-            initWindow();
             initVulkan();
             mainLoop();
             cleanup();
         }
 
     private:
-        SDL_Window *window = nullptr;
+        Simulphy::Window window = Simulphy::Window(WIDTH, HEIGHT);
         vk::raii::Context context;
         vk::raii::Instance instance = nullptr;
         vk::raii::DebugUtilsMessengerEXT debugMessenger = nullptr;
@@ -165,24 +165,6 @@ class Application {
         float cameraPitch = std::asin(normalizedDir.y);
 
 	    std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
-
-        void initWindow() {
-	        if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-	            throw std::runtime_error(std::string("failed to initialize SDL: ") + SDL_GetError());
-	        }
-
-	        window = SDL_CreateWindow(
-	            "Simulphy",
-	            SDL_WINDOWPOS_CENTERED,
-	            SDL_WINDOWPOS_CENTERED,
-	            static_cast<int>(WIDTH),
-	            static_cast<int>(HEIGHT),
-	            SDL_WINDOW_VULKAN | SDL_WINDOW_RESIZABLE
-	        );
-	        if (window == nullptr) {
-	            throw std::runtime_error(std::string("failed to create SDL window: ") + SDL_GetError());
-	        }
-	    }
 
 	    void processEvent(const SDL_Event &event) {
 	        if (event.type == SDL_QUIT ||
@@ -265,14 +247,11 @@ class Application {
             ImGui_ImplSDL2_Shutdown();
             ImGui::DestroyContext();
             cleanupSwapChain();
-
-            SDL_DestroyWindow(window);
-            SDL_Quit();
         }
 
         void recreateSwapChain() {
             int width = 0, height = 0;
-            SDL_Vulkan_GetDrawableSize(window, &width, &height);
+            SDL_Vulkan_GetDrawableSize(window.get(), &width, &height);
             while ((width == 0 || height == 0) && !windowShouldClose) {
                 SDL_Event event;
                 if (!SDL_WaitEvent(&event)) {
@@ -284,7 +263,7 @@ class Application {
                     ImGui_ImplSDL2_ProcessEvent(&event);
                     processEvent(event);
                 }
-                SDL_Vulkan_GetDrawableSize(window, &width, &height);
+                SDL_Vulkan_GetDrawableSize(window.get(), &width, &height);
             }
             if (windowShouldClose) {
                 return;
@@ -311,7 +290,7 @@ class Application {
 
             ImGui::StyleColorsDark();
 
-            if (!ImGui_ImplSDL2_InitForVulkan(window)) {
+            if (!ImGui_ImplSDL2_InitForVulkan(window.get())) {
                 throw std::runtime_error("failed to initialize ImGui SDL2 backend!");
             }
             initImGuiVulkan();
@@ -392,11 +371,11 @@ class Application {
 
         std::vector<const char*> getRequiredInstanceExtensions() {
             unsigned int extensionCount = 0;
-            if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, nullptr)) {
+            if (!SDL_Vulkan_GetInstanceExtensions(window.get(), &extensionCount, nullptr)) {
                 throw std::runtime_error(std::string("failed to get SDL Vulkan extension count: ") + SDL_GetError());
             }
             std::vector<const char*> extensions(extensionCount);
-            if (!SDL_Vulkan_GetInstanceExtensions(window, &extensionCount, extensions.data())) {
+            if (!SDL_Vulkan_GetInstanceExtensions(window.get(), &extensionCount, extensions.data())) {
                 throw std::runtime_error(std::string("failed to get SDL Vulkan extensions: ") + SDL_GetError());
             }
             if (enableValidationLayers) {
@@ -515,7 +494,7 @@ class Application {
 
         void createSurface() {
             VkSurfaceKHR _surface;
-            if (!SDL_Vulkan_CreateSurface(window, *instance, &_surface)) {
+            if (!SDL_Vulkan_CreateSurface(window.get(), *instance, &_surface)) {
                 throw std::runtime_error("failed to create window surface!");
             }
             surface = vk::raii::SurfaceKHR(instance, _surface);
@@ -630,7 +609,7 @@ class Application {
             }
 
             int width, height;
-            SDL_Vulkan_GetDrawableSize(window, &width, &height);
+            SDL_Vulkan_GetDrawableSize(window.get(), &width, &height);
 
             return {
                 std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
