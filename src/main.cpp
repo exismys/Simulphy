@@ -307,74 +307,7 @@ class Application {
             }
         }
 
-        void pickPhysicalDevice() {
-            std::vector<vk::raii::PhysicalDevice> physicalDevices = instance.get().enumeratePhysicalDevices();
-            auto const devIter = std::ranges::find_if(physicalDevices, [&](auto const & physicalDevice) {
-                return isDeviceSuitable(physicalDevice); 
-            });
 
-            if (devIter == physicalDevices.end()) {
-                throw std::runtime_error( "failed to find a suitable GPU!" );
-            }
-            physicalDevice = *devIter;
-            msaaSamples = getMaxUsableSampleCount();
-            std::cout << "MSAA samples: " << static_cast<uint32_t>(msaaSamples) << '\n';
-        }
-
-        bool isDeviceSuitable(vk::raii::PhysicalDevice const & physicalDevice) {
-            bool supportsVulkan1_3 = physicalDevice.getProperties().apiVersion >= vk::ApiVersion13;
-
-            auto queueFamilies = physicalDevice.getQueueFamilyProperties();
-            bool supportsGraphics = std::ranges::any_of(queueFamilies, [](auto const & qfp) {
-                return !!(qfp.queueFlags & vk::QueueFlagBits::eGraphics); 
-            });
-
-            auto availableDeviceExtensions = physicalDevice.enumerateDeviceExtensionProperties();
-            bool supportsAllRequiredExtensions = std::ranges::all_of( requiredDeviceExtension,[&availableDeviceExtensions](auto const & requiredDeviceExtension) {
-                return std::ranges::any_of(availableDeviceExtensions, [requiredDeviceExtension](auto const & availableDeviceExtension) { 
-                    return strcmp(availableDeviceExtension.extensionName, requiredDeviceExtension) == 0; 
-                });
-            });
-
-            auto features = physicalDevice.template getFeatures2<vk::PhysicalDeviceFeatures2,
-                                                                 vk::PhysicalDeviceVulkan11Features,
-                                                                 vk::PhysicalDeviceVulkan13Features,
-                                                                 vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>();
-
-            bool supportsRequiredFeatures = features.template get<vk::PhysicalDeviceFeatures2>().features.samplerAnisotropy &&
-                                            features.template get<vk::PhysicalDeviceVulkan11Features>().shaderDrawParameters &&
-                                            features.template get<vk::PhysicalDeviceVulkan13Features>().dynamicRendering &&
-                                            features.template get<vk::PhysicalDeviceVulkan13Features>().synchronization2 &&
-                                            features.template get<vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT>().extendedDynamicState;
-
-            return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;
-        }
-
-        vk::SampleCountFlagBits getMaxUsableSampleCount() {
-            // vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
-
-            // vk::SampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
-            // if (counts & vk::SampleCountFlagBits::e64) {
-            //     return vk::SampleCountFlagBits::e64;
-            // }
-            // if (counts & vk::SampleCountFlagBits::e32) {
-            //     return vk::SampleCountFlagBits::e32;
-            // }
-            // if (counts & vk::SampleCountFlagBits::e16) {
-            //     return vk::SampleCountFlagBits::e16;
-            // }
-            // if (counts & vk::SampleCountFlagBits::e8) {
-            //     return vk::SampleCountFlagBits::e8;
-            // }
-            // if (counts & vk::SampleCountFlagBits::e4) {
-            //     return vk::SampleCountFlagBits::e4;
-            // }
-            // if (counts & vk::SampleCountFlagBits::e2) {
-            //     return vk::SampleCountFlagBits::e2;
-            // }
-
-            return vk::SampleCountFlagBits::e2;
-	    }
 
         void createSurface() {
             VkSurfaceKHR _surface;

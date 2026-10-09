@@ -26,6 +26,12 @@ namespace Simulphy {
 
         public:
             Instance(const Window& window) {
+                //----------------------------------------------------------------------
+                // Check for supported layers.
+                // Vulkan loader creates the following call chain:
+            
+                // application -> vulkan loader -> validation layer -> vulkan driver
+                //----------------------------------------------------------------------
                 std::vector<char const*> requiredLayers;
                 if (enableValidationLayers) {
                     requiredLayers.assign(validationLayers.begin(), validationLayers.end());
@@ -41,7 +47,19 @@ namespace Simulphy {
                 if (unsupportedLayerIt != requiredLayers.end()) {
                     throw std::runtime_error("Required layer not supported: " + std::string(*unsupportedLayerIt));
                 }
+                //----------------------------------------------------------------------
 
+                //----------------------------------------------------------------------
+                // Check for supported extensions
+
+                // application -> vulkan loader -> vulkan driver -> gpu
+                //                                      |
+                //                                      +-- core vulkan api
+                //                                      |
+                //                                      +-- VK_EXT_debug_utils
+                //                                      |
+                //                                      `-- other extensions
+                //----------------------------------------------------------------------
                 auto requiredExtensions = getRequiredInstanceExtensions(window);
 
                 auto extensionProperties = context.enumerateInstanceExtensionProperties();
@@ -50,6 +68,7 @@ namespace Simulphy {
                         return strcmp(extensionProperty.extensionName, requiredExtension) == 0;
                     });
                 });
+                //----------------------------------------------------------------------
 
                 if (unsupportedPropertyIt != requiredExtensions.end()) {
                     throw std::runtime_error("Required extension not supported: " + std::string(*unsupportedPropertyIt));
@@ -81,11 +100,11 @@ namespace Simulphy {
             static std::vector<const char*> getRequiredInstanceExtensions(const Window& window) {
                 unsigned int extensionCount = 0;
                 if (!SDL_Vulkan_GetInstanceExtensions(window.get(), &extensionCount, nullptr)) {
-                    throw std::runtime_error(std::string("failed to get SDL Vulkan extension count: ") + SDL_GetError());
+                    throw std::runtime_error(std::string("Failed to get SDL Vulkan extension count: ") + SDL_GetError());
                 }
                 std::vector<const char*> extensions(extensionCount);
                 if (!SDL_Vulkan_GetInstanceExtensions(window.get(), &extensionCount, extensions.data())) {
-                    throw std::runtime_error(std::string("failed to get SDL Vulkan extensions: ") + SDL_GetError());
+                    throw std::runtime_error(std::string("Failed to get SDL Vulkan extensions: ") + SDL_GetError());
                 }
                 if (enableValidationLayers) {
                     extensions.push_back(vk::EXTDebugUtilsExtensionName);
