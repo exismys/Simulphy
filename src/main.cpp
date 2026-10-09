@@ -90,12 +90,8 @@ class Application {
         Simulphy::Instance instance = Simulphy::Instance(window);
         Simulphy::Surface surface = Simulphy::Surface(window, instance);
         Simulphy::Device device = Simulphy::Device(window, instance, surface);
-
-        vk::Extent2D swapChainExtent;
-        vk::SurfaceFormatKHR swapChainSurfaceFormat;
-        vk::raii::SwapchainKHR swapChain = nullptr;
-        std::vector<vk::Image> swapChainImages;
-        std::vector<vk::raii::ImageView> swapChainImageViews;
+        
+        
 
         VkFormat imguiColorFormat = VK_FORMAT_UNDEFINED;
 
@@ -184,7 +180,6 @@ class Application {
 	    }
 
 	    void initVulkan() {
-            createSwapChain();
             createImageViews();
             createDescriptorSetLayout();
             createGraphicsPipeline();
@@ -305,94 +300,6 @@ class Application {
         }
 
 
-
-        void createSwapChain() {
-            vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR( *surface );
-            swapChainExtent = chooseSwapExtent(surfaceCapabilities);
-            uint32_t minImageCount = chooseSwapMinImageCount(surfaceCapabilities);
-
-            std::vector<vk::SurfaceFormatKHR> availableFormats = physicalDevice.getSurfaceFormatsKHR(*surface);
-            swapChainSurfaceFormat = chooseSwapSurfaceFormat(availableFormats);
-
-            const bool hasSupportedPixelFormat = swapChainSurfaceFormat.format == vk::Format::eB8G8R8A8Srgb ||
-                                                 swapChainSurfaceFormat.format == vk::Format::eB8G8R8A8Unorm ||
-                                                 swapChainSurfaceFormat.format == vk::Format::eR8G8B8A8Srgb ||
-                                                 swapChainSurfaceFormat.format == vk::Format::eR8G8B8A8Unorm;
-            const auto formatProperties = physicalDevice.getFormatProperties(swapChainSurfaceFormat.format);
-            canCaptureFrame = (surfaceCapabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferSrc) &&
-                              (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) &&
-                              hasSupportedPixelFormat;
-
-            std::vector<vk::PresentModeKHR> availablePresentModes = physicalDevice.getSurfacePresentModesKHR(*surface);
-		    vk::PresentModeKHR presentMode = chooseSwapPresentMode(availablePresentModes);
-
-            vk::SwapchainCreateInfoKHR swapChainCreateInfo{
-                .surface          = *surface,
-                .minImageCount    = minImageCount,
-                .imageFormat      = swapChainSurfaceFormat.format,
-                .imageColorSpace  = swapChainSurfaceFormat.colorSpace,
-                .imageExtent      = swapChainExtent,
-                .imageArrayLayers = 1,
-                .imageUsage       = vk::ImageUsageFlagBits::eColorAttachment |
-                                    (canCaptureFrame ? vk::ImageUsageFlagBits::eTransferSrc : vk::ImageUsageFlags{}),
-                .imageSharingMode = vk::SharingMode::eExclusive,
-                .preTransform     = surfaceCapabilities.currentTransform,
-                .compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque,
-                .presentMode      = presentMode,
-                .clipped          = true
-            };
-
-            swapChain = vk::raii::SwapchainKHR(device, swapChainCreateInfo);
-            swapChainImages = swapChain.getImages();
-        }
-
-        vk::SurfaceFormatKHR chooseSwapSurfaceFormat(std::vector<vk::SurfaceFormatKHR> const &availableFormats) {
-            assert(!availableFormats.empty());
-            const auto formatIt = std::ranges::find_if(availableFormats, [](const auto &format) { 
-                return format.format == vk::Format::eB8G8R8A8Srgb && format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear; 
-            });
-            return formatIt != availableFormats.end() ? *formatIt : availableFormats[0];
-        }
-
-        vk::PresentModeKHR chooseSwapPresentMode(std::vector<vk::PresentModeKHR> const &availablePresentModes) {
-            assert(std::ranges::any_of(availablePresentModes, [](auto presentMode) { 
-                return presentMode == vk::PresentModeKHR::eFifo; 
-            }));
-            return std::ranges::any_of(availablePresentModes, [](const vk::PresentModeKHR value) { 
-                return vk::PresentModeKHR::eMailbox == value; 
-            }) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
-        }
-
-        vk::Extent2D chooseSwapExtent(vk::SurfaceCapabilitiesKHR const &capabilities){
-            if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-                return capabilities.currentExtent;
-            }
-
-            int width, height;
-            SDL_Vulkan_GetDrawableSize(window.get(), &width, &height);
-
-            return {
-                std::clamp<uint32_t>(width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width),
-                std::clamp<uint32_t>(height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height)
-            };
-        }
-
-        uint32_t chooseSwapMinImageCount(vk::SurfaceCapabilitiesKHR const &surfaceCapabilities) {
-            auto minImageCount = std::max(3u, surfaceCapabilities.minImageCount);
-            if ((0 < surfaceCapabilities.maxImageCount) && (surfaceCapabilities.maxImageCount < minImageCount)) {
-                minImageCount = surfaceCapabilities.maxImageCount;
-            }
-            return minImageCount;
-        }
-
-        void createImageViews() {
-            assert(swapChainImageViews.empty());
-
-            swapChainImageViews.reserve(swapChainImages.size());
-            for (auto &image : swapChainImages) {
-                swapChainImageViews.emplace_back(createImageView(image, swapChainSurfaceFormat.format, vk::ImageAspectFlagBits::eColor, 1));
-            }
-        }
 
         void createDescriptorSetLayout() {
             std::array<vk::DescriptorSetLayoutBinding, 2> bindings{
@@ -692,16 +599,6 @@ class Application {
 
         void createTextureImageView() {
 		    textureImageView = createImageView(*textureImage, vk::Format::eR8G8B8A8Srgb, vk::ImageAspectFlagBits::eColor, mipLevels);
-	    }
-
-        vk::raii::ImageView createImageView(vk::Image const &image, vk::Format format, vk::ImageAspectFlags aspectFlags, uint32_t mipLevels) {
-            vk::ImageViewCreateInfo viewInfo{
-                .image            = image,
-                .viewType         = vk::ImageViewType::e2D,
-                .format           = format,
-                .subresourceRange = {.aspectMask = aspectFlags, .baseMipLevel = 0, .levelCount = mipLevels, .baseArrayLayer = 0, .layerCount = 1}
-            };
-            return vk::raii::ImageView(device, viewInfo);
 	    }
 
         void createTextureSampler() {

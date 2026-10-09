@@ -26,11 +26,11 @@ namespace Simulphy {
                 createLogicalDevice(surface);
             }
 
-            vk::raii::PhysicalDevice& getPhysicalDevice() {
+            const vk::raii::PhysicalDevice& getPhysicalDevice() const {
                 return physicalDevice;
             }
 
-            vk::raii::Device& getLogicalDevice() {
+            const vk::raii::Device& getLogicalDevice() const {
                 return device;
             }
 
@@ -183,5 +183,15 @@ namespace Simulphy {
                 device = vk::raii::Device(physicalDevice, deviceCreateInfo);
                 graphicsQueue = vk::raii::Queue(device, queueIndex, 0);
             }
+
+            vk::raii::ImageView createImageView(const vk::Image& image, vk::Format format, vk::ImageAspectFlags aspectFlags, uint32_t mipLevels) const {
+                vk::ImageViewCreateInfo viewInfo{
+                    .image            = image,
+                    .viewType         = vk::ImageViewType::e2D,
+                    .format           = format,
+                    .subresourceRange = {.aspectMask = aspectFlags, .baseMipLevel = 0, .levelCount = mipLevels, .baseArrayLayer = 0, .layerCount = 1}
+                };
+                return vk::raii::ImageView(device, viewInfo);
+	        }
     };
 }
