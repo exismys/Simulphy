@@ -6,6 +6,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/hash.hpp>
 
+namespace Simulphy {
 struct Vertex {
 	glm::vec3 pos;
 	glm::vec3 color;
@@ -29,10 +30,11 @@ struct Vertex {
 		return pos == other.pos && color == other.color && texCoord == other.texCoord;
 	}
 };
+}
 
 template <>
-struct std::hash<Vertex> {
-	size_t operator()(Vertex const &vertex) const noexcept {
+struct std::hash<Simulphy::Vertex> {
+	size_t operator()(Simulphy::Vertex const &vertex) const noexcept {
 		return ((hash<glm::vec3>()(vertex.pos) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
 	}
 };
