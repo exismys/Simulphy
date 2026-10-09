@@ -5,6 +5,8 @@
 #include <algorithm>
 
 #include "Instance.hpp"
+#include "Window.hpp"
+#include "Surface.hpp"
 
 namespace Simulphy {
     class Device {
@@ -12,15 +14,28 @@ namespace Simulphy {
             vk::raii::PhysicalDevice physicalDevice = nullptr;
             vk::SampleCountFlagBits msaaSampleCount = vk::SampleCountFlagBits::e1;
 
+            uint32_t queueIndex = ~0;
+            vk::raii::Device device = nullptr;
+            vk::raii::Queue graphicsQueue = nullptr;
+
             std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
 
         public:
-            Device(const Instance& instance) {
-                pickPhysicalDevice(instance.get());
+            Device(const Window& window, const Instance& instance, const Surface& surface) {
+                pickPhysicalDevice(instance);
+                createLogicalDevice(surface);
             }
 
-            void pickPhysicalDevice(const vk::raii::Instance& instance) {
-                std::vector<vk::raii::PhysicalDevice> physicalDevices = instance.enumeratePhysicalDevices();
+            vk::raii::PhysicalDevice& getPhysicalDevice() {
+                return physicalDevice;
+            }
+
+            vk::raii::Device& getLogicalDevice() {
+                return device;
+            }
+
+            void pickPhysicalDevice(const Instance& instance) {
+                std::vector<vk::raii::PhysicalDevice> physicalDevices = instance.get().enumeratePhysicalDevices();
 
                 auto const devIter = std::ranges::find_if(physicalDevices, [&](auto const & physicalDevice) {
                     return isDeviceSuitable(physicalDevice); 
@@ -120,5 +135,53 @@ namespace Simulphy {
 
                 return vk::SampleCountFlagBits::e2;
 	        }
+
+    
+
+            void createLogicalDevice(const Surface& surface) {
+                // Get queue family index which supports graphics and surface
+                std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
+
+                for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++) {
+                    if ((queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) && 
+                        physicalDevice.getSurfaceSupportKHR(qfpIndex, *surface.get())) {
+                        queueIndex = qfpIndex;
+                        break;
+                    }
+                }
+                if (queueIndex == ~0) {
+                    throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
+                }
+
+                // Create queue and logical device with required features
+                vk::StructureChain<vk::PhysicalDeviceFeatures2,
+                                vk::PhysicalDeviceVulkan11Features,
+                                vk::PhysicalDeviceVulkan13Features,
+                                vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain = {
+                    {.features = {.samplerAnisotropy = true}},
+                    {.shaderDrawParameters = true},
+                    {.synchronization2 = true, .dynamicRendering = true},
+                    {.extendedDynamicState = true}
+                };
+
+                float queuePriority = 0.5f;
+                
+                vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
+                    .queueFamilyIndex = queueIndex,
+                    .queueCount = 1, // only one queue in the family with priority "queuePriority"
+                    .pQueuePriorities = &queuePriority
+                };
+
+                vk::DeviceCreateInfo deviceCreateInfo{
+                    .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
+                    .queueCreateInfoCount = 1,
+                    .pQueueCreateInfos = &deviceQueueCreateInfo,
+                    .enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtension.size()),
+                    .ppEnabledExtensionNames = requiredDeviceExtension.data()
+                };
+
+                device = vk::raii::Device(physicalDevice, deviceCreateInfo);
+                graphicsQueue = vk::raii::Queue(device, queueIndex, 0);
+            }
     };
 }

@@ -1,3 +1,5 @@
+#include "Device.hpp"
+#include "Surface.hpp"
 #include <vulkan/vulkan_raii.hpp>
 
 #include <SDL.h>
@@ -33,6 +35,7 @@
 #include "Vertex.hpp"
 #include "Window.hpp"
 #include "Instance.hpp"
+#include "Device.hpp"
 
 constexpr uint32_t WIDTH = 1200;
 constexpr uint32_t HEIGHT = 720;
@@ -85,12 +88,9 @@ class Application {
     private:
         Simulphy::Window window = Simulphy::Window(WIDTH, HEIGHT);
         Simulphy::Instance instance = Simulphy::Instance(window);
-        vk::raii::PhysicalDevice physicalDevice = nullptr;
-        vk::SampleCountFlagBits msaaSamples = vk::SampleCountFlagBits::e1;
-        vk::raii::Device device = nullptr;
-        uint32_t queueIndex = ~0;
-        vk::raii::Queue graphicsQueue = nullptr;
-        vk::raii::SurfaceKHR surface = nullptr;
+        Simulphy::Surface surface = Simulphy::Surface(window, instance);
+        Simulphy::Device device = Simulphy::Device(window, instance, surface);
+
         vk::Extent2D swapChainExtent;
         vk::SurfaceFormatKHR swapChainSurfaceFormat;
         vk::raii::SwapchainKHR swapChain = nullptr;
@@ -184,9 +184,6 @@ class Application {
 	    }
 
 	    void initVulkan() {
-            createSurface();
-            pickPhysicalDevice();
-            createLogicalDevice();
             createSwapChain();
             createImageViews();
             createDescriptorSetLayout();
@@ -308,60 +305,6 @@ class Application {
         }
 
 
-
-        void createSurface() {
-            VkSurfaceKHR _surface;
-            if (!SDL_Vulkan_CreateSurface(window.get(), *instance.get(), &_surface)) {
-                throw std::runtime_error("failed to create window surface!");
-            }
-            surface = vk::raii::SurfaceKHR(instance.get(), _surface);
-        }
-
-        void createLogicalDevice() {
-            std::vector<vk::QueueFamilyProperties> queueFamilyProperties = physicalDevice.getQueueFamilyProperties();
-
-            for (uint32_t qfpIndex = 0; qfpIndex < queueFamilyProperties.size(); qfpIndex++) {
-                if (
-                    (queueFamilyProperties[qfpIndex].queueFlags & vk::QueueFlagBits::eGraphics) && 
-                    physicalDevice.getSurfaceSupportKHR(qfpIndex, *surface)
-                ) {
-                    queueIndex = qfpIndex;
-                    break;
-                }
-            }
-            if (queueIndex == ~0) {
-                throw std::runtime_error("Could not find a queue for graphics and present -> terminating");
-            }
-
-            vk::StructureChain<vk::PhysicalDeviceFeatures2,
-                               vk::PhysicalDeviceVulkan11Features,
-                               vk::PhysicalDeviceVulkan13Features,
-                               vk::PhysicalDeviceExtendedDynamicStateFeaturesEXT> featureChain = {
-                {.features = {.samplerAnisotropy = true}},
-                {.shaderDrawParameters = true},
-                {.synchronization2 = true, .dynamicRendering = true}, 
-                {.extendedDynamicState = true}
-            };
-
-            float queuePriority = 0.5f;
-            
-            vk::DeviceQueueCreateInfo deviceQueueCreateInfo{
-                .queueFamilyIndex = queueIndex, 
-                .queueCount = 1, 
-                .pQueuePriorities = &queuePriority 
-            };
-
-            vk::DeviceCreateInfo deviceCreateInfo{
-                .pNext = &featureChain.get<vk::PhysicalDeviceFeatures2>(),
-                .queueCreateInfoCount = 1,
-                .pQueueCreateInfos = &deviceQueueCreateInfo,
-                .enabledExtensionCount = static_cast<uint32_t>(requiredDeviceExtension.size()),
-                .ppEnabledExtensionNames = requiredDeviceExtension.data()
-            };
-
-            device = vk::raii::Device(physicalDevice, deviceCreateInfo);
-            graphicsQueue = vk::raii::Queue(device, queueIndex, 0);
-        }
 
         void createSwapChain() {
             vk::SurfaceCapabilitiesKHR surfaceCapabilities = physicalDevice.getSurfaceCapabilitiesKHR( *surface );
