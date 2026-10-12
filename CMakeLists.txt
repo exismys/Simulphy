@@ -44,6 +44,8 @@ FetchContent_MakeAvailable(glm stb_image imgui tinyobjloader)
 # List all source files that need to be compiled into the executable
 set(SOURCES
     src/main.cpp
+    src/Utilities.cpp
+    src/stb_impl.cpp
 )
 
 # Create the executable target named "BeLightVulkan" from the specified source files
