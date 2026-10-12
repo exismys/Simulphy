@@ -18,12 +18,15 @@ class Device {
         vk::raii::Device device = nullptr;
         vk::raii::Queue graphicsQueue = nullptr;
 
+        vk::raii::CommandPool commandPool = nullptr;
+
         std::vector<const char *> requiredDeviceExtension = {vk::KHRSwapchainExtensionName};
 
     public:
         Device(const Window& window, const Instance& instance, const Surface& surface) {
             pickPhysicalDevice(instance);
             createLogicalDevice(surface);
+            createCommandPool();
         }
 
         const vk::raii::PhysicalDevice& getPhysicalDevice() const {
@@ -44,6 +47,10 @@ class Device {
 
         const vk::raii::Queue& getGraphicsQueue() const {
             return graphicsQueue;
+        }
+
+        const vk::raii::CommandPool& getCommandPool() const {
+            return commandPool;
         }
 
         void pickPhysicalDevice(const Instance& instance) {
@@ -122,7 +129,7 @@ class Device {
             return supportsVulkan1_3 && supportsGraphics && supportsAllRequiredExtensions && supportsRequiredFeatures;
         }
 
-        vk::SampleCountFlagBits getMaxUsableSampleCount() {
+        vk::SampleCountFlagBits getMaxUsableSampleCount() const {
             // vk::PhysicalDeviceProperties physicalDeviceProperties = physicalDevice.getProperties();
 
             // vk::SampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
@@ -147,8 +154,6 @@ class Device {
 
             return vk::SampleCountFlagBits::e2;
         }
-
-
 
         void createLogicalDevice(const Surface& surface) {
             // Get queue family index which supports graphics and surface
@@ -205,5 +210,83 @@ class Device {
             };
             return vk::raii::ImageView(device, viewInfo);
         }
+
+        void createCommandPool() {
+            vk::CommandPoolCreateInfo poolInfo{
+                .flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer,
+                .queueFamilyIndex = queueIndex
+            };
+            commandPool = vk::raii::CommandPool(device, poolInfo);
+	    }
+
+        std::pair<vk::raii::Buffer, vk::raii::DeviceMemory> createBuffer(vk::DeviceSize size, 
+                                                                         vk::BufferUsageFlags usage, 
+                                                                         vk::MemoryPropertyFlags properties) const {
+            vk::BufferCreateInfo bufferInfo{
+                .size        = size, 
+                .usage       = usage, 
+                .sharingMode = vk::SharingMode::eExclusive
+            };
+            vk::raii::Buffer buffer = vk::raii::Buffer(device, bufferInfo);
+
+            vk::MemoryRequirements memRequirements = buffer.getMemoryRequirements();
+            vk::MemoryAllocateInfo allocInfo{
+                .allocationSize  = memRequirements.size, 
+                .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties)
+            };
+            vk::raii::DeviceMemory bufferMemory = vk::raii::DeviceMemory(device, allocInfo);
+
+            buffer.bindMemory(*bufferMemory, 0);
+            return {std::move(buffer), std::move(bufferMemory)};
+	    }
+
+        uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const {
+            vk::PhysicalDeviceMemoryProperties memProperties = physicalDevice.getMemoryProperties();
+
+            for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+                if (
+                    (typeFilter & (1 << i)) && 
+                    (memProperties.memoryTypes[i].propertyFlags & properties) == properties
+                ) {
+                    return i;
+                }
+            }
+
+            throw std::runtime_error("failed to find suitable memory type!");
+	    }
+
+        std::pair<vk::raii::Image, vk::raii::DeviceMemory> createImage(uint32_t width, 
+                                                                       uint32_t height, 
+                                                                       uint32_t mipLevels,
+                                                                       vk::SampleCountFlagBits numSamples,
+                                                                       vk::Format format, 
+                                                                       vk::ImageTiling tiling, 
+                                                                       vk::ImageUsageFlags usage, 
+                                                                       vk::MemoryPropertyFlags properties) const {
+            vk::ImageCreateInfo imageInfo{
+                .imageType     = vk::ImageType::e2D,
+                .format        = format,
+                .extent        = {width, height, 1},
+                .mipLevels     = mipLevels,
+                .arrayLayers   = 1,
+                .samples       = numSamples,
+                .tiling        = tiling,
+                .usage         = usage,
+                .sharingMode   = vk::SharingMode::eExclusive,
+                .initialLayout = vk::ImageLayout::eUndefined
+            };
+            vk::raii::Image image = vk::raii::Image(device, imageInfo);
+
+            vk::MemoryRequirements memRequirements = image.getMemoryRequirements();
+            vk::MemoryAllocateInfo allocInfo{
+                .allocationSize  = memRequirements.size,
+                .memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties)
+            };
+            vk::raii::DeviceMemory imageMemory = vk::raii::DeviceMemory(device, allocInfo);
+            
+            image.bindMemory(imageMemory, 0);
+
+            return {std::move(image), std::move(imageMemory)};
+	    }
 };
 }

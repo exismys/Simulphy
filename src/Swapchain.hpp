@@ -61,6 +61,10 @@ class Swapchain {
                                                     swapChainSurfaceFormat.format == vk::Format::eR8G8B8A8Srgb ||
                                                     swapChainSurfaceFormat.format == vk::Format::eR8G8B8A8Unorm;
 
+            
+            // Surface: interface between vulkan and window system
+            // The window system decides permitted image usages, formats, and presentation modes
+            // Check if the presentation surface supports creating swapchain images that can be used as transfer sources
             const auto formatProperties = device.getPhysicalDevice().getFormatProperties(swapChainSurfaceFormat.format);
             canCaptureFrame = (surfaceCapabilities.supportedUsageFlags & vk::ImageUsageFlagBits::eTransferSrc) &&
                             (formatProperties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eTransferSrc) &&
