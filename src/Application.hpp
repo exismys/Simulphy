@@ -55,7 +55,7 @@ class Application {
         Simulphy::Mesh mesh = Simulphy::Mesh(device);
 
         Simulphy::Camera camera{
-            {0, 2, 15},
+            {0, 2, -15},
             {0, 0, 0}
         };
 
