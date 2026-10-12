@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <iostream>
 
 #include <glm/glm.hpp>
 
@@ -16,9 +17,12 @@ public:
     Camera(glm::vec3 position, glm::vec3 target)
         : position(position), target(target), pitch(0.0f), yaw(0.0f), roll(0.0f) {
 
-        glm::vec3 normalizedDir = glm::normalize(target - position);
-        yaw = std::atan2(normalizedDir.x, normalizedDir.z);
-        pitch = std::asin(normalizedDir.y);
+        glm::vec3 normalizedViewDir = glm::normalize(target - position);
+        yaw = std::atan2(normalizedViewDir.x, normalizedViewDir.z);
+        pitch = std::asin(normalizedViewDir.y);
+
+        std::cout << "Initial camera yaw: " << yaw << std::endl;
+        std::cout << "Initial camera pitch: " << pitch << std::endl;
     }
 };
 }

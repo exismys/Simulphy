@@ -3,6 +3,7 @@
 #include <vulkan/vulkan_raii.hpp>
 
 #include <SDL.h>
+#include <SDL_scancode.h>
 #include <SDL_vulkan.h>
 
 #include <imgui.h>
@@ -20,6 +21,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cmath>
+#include <chrono>
 
 #include "Window.hpp"
 #include "Instance.hpp"
@@ -55,7 +57,7 @@ class Application {
         Simulphy::Mesh mesh = Simulphy::Mesh(device);
 
         Simulphy::Camera camera{
-            {0, 2, -15},
+            {0, 2, 15},
             {0, 0, 0}
         };
 
@@ -103,13 +105,23 @@ class Application {
 	    }
 
         void mainLoop() {
+            auto previousFrameTime = std::chrono::steady_clock::now();
             while (!windowShouldClose) {
                 SDL_Event event;
                 while (SDL_PollEvent(&event)) {
                     ImGui_ImplSDL2_ProcessEvent(&event);
                     processEvent(event);
                 }
+
+                const auto currentFrameTime = std::chrono::steady_clock::now();
+                const float frameTime = std::chrono::duration<float>(currentFrameTime - previousFrameTime).count();
+                previousFrameTime = currentFrameTime;
+
+                const Uint8* keys = SDL_GetKeyboardState(nullptr);
+
+                handleCameraMovement(keys, std::min(frameTime, 0.1f));
                 handleRelativeMouseMovement();
+                log(keys);
                 if (windowShouldClose) {
                     break;
                 }
@@ -221,5 +233,32 @@ class Application {
             camera.pitch -= static_cast<float>(relY) * sensitivity;
             camera.pitch = std::clamp(camera.pitch, -1.5f, 1.5f);
             // std::cout << "cameraPitch: " << cameraPitch << std::endl;
+        }
+
+        void handleCameraMovement(const Uint8* keys, float deltaTime) {
+            const glm::vec3 forwardOnGround(std::sin(camera.yaw), 0.0f, std::cos(camera.yaw));
+            const glm::vec3 rightOnGround(-std::cos(camera.yaw), 0.0f, std::sin(camera.yaw));
+            glm::vec3 movement(0.0f);
+
+            if (keys[SDL_SCANCODE_W]) movement += forwardOnGround;
+            if (keys[SDL_SCANCODE_S]) movement -= forwardOnGround;
+            if (keys[SDL_SCANCODE_A]) movement -= rightOnGround;
+            if (keys[SDL_SCANCODE_D]) movement += rightOnGround;
+ 
+
+            constexpr float movementSpeed = 5.0f;
+            if (glm::dot(movement, movement) > 1.0f) {
+                movement = glm::normalize(movement);
+            }
+            camera.position += movement * movementSpeed * deltaTime;
+            if (keys[SDL_SCANCODE_SPACE]) {
+                camera.position.y += movementSpeed * deltaTime;
+            }
+        }
+
+        void log(const Uint8* keys) {
+            if (keys[SDL_SCANCODE_O]) {
+                std::cout << "Camera yaw: " << camera.yaw << " | Camera pitch: " << camera.pitch << std::endl; 
+            }
         }
 };
