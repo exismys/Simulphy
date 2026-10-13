@@ -1,5 +1,6 @@
 # Specify the minimum CMake version required for this project
 cmake_minimum_required(VERSION 3.14)
+cmake_policy(SET CMP0135 NEW)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -19,9 +20,10 @@ find_package(Vulkan REQUIRED)
 
 include(FetchContent)
 
-FetchContent_Declare(glm
-  URL https://github.com/g-truc/glm/releases/download/0.9.9.8/glm-0.9.9.8.zip
-  SOURCE_DIR ${CMAKE_BINARY_DIR}/_deps/glm-src
+FetchContent_Declare(
+  glm
+  GIT_REPOSITORY https://github.com/g-truc/glm.git
+  GIT_TAG        1.0.3
 )
 
 FetchContent_Declare(stb_image
@@ -70,6 +72,7 @@ target_compile_definitions(BeLightVulkan PRIVATE
 target_link_libraries(BeLightVulkan
     PkgConfig::SDL2
     Vulkan::Vulkan
+    glm::glm
     tinyobjloader
     dl
 )
@@ -78,7 +81,6 @@ target_link_libraries(BeLightVulkan
 target_include_directories(BeLightVulkan PRIVATE
     include
     $ENV{VULKAN_SDK}/include
-    ${CMAKE_BINARY_DIR}/_deps/glm-src
     ${CMAKE_BINARY_DIR}/_deps/stb-src
     ${imgui_SOURCE_DIR}
     ${imgui_SOURCE_DIR}/backends
