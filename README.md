@@ -6,6 +6,9 @@ I intend to hack it into being a visual physics sandbox.
 
 ## Rendered Scenes
 
+### Loading 3D model [[Watch the video](https://www.youtube.com/watch?v=2ylnEPGRkoc)]
+[![Watch the video](https://img.youtube.com/vi/2ylnEPGRkoc/maxresdefault.jpg)](https://www.youtube.com/watch?v=2ylnEPGRkoc)
+
 ### Textured Cube
 ![Textured Cube](renders/textured-cube.png)
 
