@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 total_time=0
 
 time_command() {

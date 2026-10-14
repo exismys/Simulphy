@@ -22,7 +22,9 @@ class Mesh {
 
     public:
         Mesh(const Device& device) {
-            loadModel(MODEL_PATH);
+            // loadModel(MODEL_PATH);
+            // createCubeMesh();
+            createPlaneMesh();
             createVertexBuffer(device);
             createIndexBuffer(device);
         }
@@ -133,6 +135,19 @@ class Mesh {
 
                 4, 5, 1, 1, 0, 4,
                 3, 2, 6, 6, 7, 3
+            };
+        }
+        
+        void createPlaneMesh() {
+            vertices = {
+                {{-0.5f, 0.0f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
+                {{0.5f, 0.0f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},
+                {{0.5f, 0.0f, -0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+                {{-0.5f, 0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
+            };
+
+            indices = {
+                0, 1, 2, 2, 3, 0
             };
         }
 };

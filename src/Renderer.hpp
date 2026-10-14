@@ -51,7 +51,7 @@ class Renderer {
 
         uint32_t frameIndex = 0;
 
-        bool canCaptureFrame = false;
+        bool canCaptureFrame = true;
 
     public:
         Renderer(const Device& device, const Swapchain& swapchain, const Pipeline& pipeline, const Texture& texture): device(device), swapchain(swapchain), pipeline(pipeline) {
@@ -287,10 +287,11 @@ class Renderer {
             float time = std::chrono::duration<float>(currentTime - startTime).count();
 
             UniformBufferObject ubo{};
-            ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+            ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
                         // rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
                         // rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
-                        // rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                        // rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
+                        glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
 
             const glm::vec3 cameraDirection(
                 std::cos(camera.pitch) * std::sin(camera.yaw),
