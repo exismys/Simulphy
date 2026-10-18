@@ -36,6 +36,7 @@ source ~/path-to-vulkansdk-symbolic-link/default/setup-env.sh
 
 ## Build
 ```
+cd shaders && ./compile.sh && cd .. && \
 cmake -B build && \
 cmake --build build && \
 ./build/bin/BeLightVulkan

@@ -122,10 +122,16 @@ class Pipeline {
                 .pDynamicStates    = dynamicStates.data()
             };
 
+            vk::PushConstantRange modelPushConstantRange{
+                .stageFlags = vk::ShaderStageFlagBits::eVertex,
+                .offset = 0,
+                .size = sizeof(glm::mat4)
+            };
             vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
                 .setLayoutCount         = 1, 
                 .pSetLayouts            = &*descriptorSetLayout, 
-                .pushConstantRangeCount = 0
+                .pushConstantRangeCount = 1,
+                .pPushConstantRanges    = &modelPushConstantRange
             };
             pipelineLayout = vk::raii::PipelineLayout(device.getLogicalDevice(), pipelineLayoutInfo);
 

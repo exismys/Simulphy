@@ -3,7 +3,7 @@
 #include <vulkan/vulkan_raii.hpp>
 #include <stb_image_write.h>
 
-#include <chrono>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "Device.hpp"
 #include "Swapchain.hpp"
@@ -18,7 +18,6 @@ constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
 namespace Simulphy {
 struct UniformBufferObject{
-    glm::mat4 model;
     glm::mat4 view;
     glm::mat4 proj;
 };
@@ -283,17 +282,7 @@ class Renderer {
         }
 
         void updateUniformBuffer(uint32_t currentImage, const Camera& camera) {
-            static auto startTime = std::chrono::high_resolution_clock::now();
-            auto currentTime = std::chrono::high_resolution_clock::now();
-            float time = std::chrono::duration<float>(currentTime - startTime).count();
-
             UniformBufferObject ubo{};
-            ubo.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f)) *
-                        // rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
-                        // rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
-                        // rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-                        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
-
             const glm::vec3 cameraDirection(
                 std::cos(camera.pitch) * std::sin(camera.yaw),
                 std::sin(camera.pitch),
@@ -387,6 +376,21 @@ class Renderer {
             commandBuffers[frameIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.getPipelineLayout(), 0, *descriptorSets[frameIndex], nullptr);
 
             for (const Object& object: scene.getObjects()) {
+                //----------------------------------------------------------------------
+                // Model transform
+                //----------------------------------------------------------------------
+                glm::mat4 model = glm::translate(glm::mat4(1.0f), object.transform.position);
+                model = glm::rotate(model, object.transform.rotation.x, glm::vec3(1.0f, 0.0f, 0.0f));
+                model = glm::rotate(model, object.transform.rotation.y, glm::vec3(0.0f, 1.0f, 0.0f));
+                model = glm::rotate(model, object.transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
+                model = glm::scale(model, object.transform.scale);
+                //----------------------------------------------------------------------
+                
+                commandBuffer.pushConstants(*pipeline.getPipelineLayout(),
+                                            vk::ShaderStageFlagBits::eVertex,
+                                            0,
+                                            sizeof(model),
+                                            &model);
                 commandBuffer.bindVertexBuffers(0, *object.mesh->getVertexBuffer(), {0});
                 commandBuffers[frameIndex].bindIndexBuffer(*object.mesh->getIndexBuffer(), 0, vk::IndexType::eUint32);
                 commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh->getIndices().size()), 1, 0, 0, 0);
