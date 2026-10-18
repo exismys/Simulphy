@@ -34,6 +34,10 @@ class Scene {
             });
         }
 
+        ~Scene() {
+            delete mesh;
+        }
+
         const std::vector<Object>& getObjects() const {
             return objects;
         }
