@@ -10,8 +10,6 @@
 #include <imgui_impl_sdl2.h>
 #include <imgui_impl_vulkan.h>
 
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/geometric.hpp>
@@ -31,7 +29,7 @@
 #include "Texture.hpp"
 #include "Camera.hpp"
 #include "Renderer.hpp"
-#include "Mesh.hpp"
+#include "Scene/Scene.hpp"
 
 constexpr uint32_t WIDTH = 1200;
 constexpr uint32_t HEIGHT = 720;
@@ -53,7 +51,8 @@ class Application {
         Simulphy::Pipeline pipeline = Simulphy::Pipeline(device, swapchain);
 
         Simulphy::Texture texture = Simulphy::Texture(device);
-        Simulphy::Mesh mesh = Simulphy::Mesh(device);
+        Simulphy::Scene scene = Simulphy::Scene(device, &texture);
+
 
         Simulphy::Camera camera{
             {0, 2, 15},
@@ -124,7 +123,7 @@ class Application {
                 if (windowShouldClose) {
                     break;
                 }
-                bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera, mesh);
+                bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera, scene);
                 if (saveFrameRequested) saveFrameRequested = false;
                 if (framebufferResized) framebufferResized = false;
                 if (!result) {

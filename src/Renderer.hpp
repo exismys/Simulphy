@@ -12,6 +12,7 @@
 #include "ImGuiLayer.hpp"
 #include "Camera.hpp"
 #include "Mesh.hpp"
+#include "Scene/Scene.hpp"
 
 constexpr int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -202,7 +203,7 @@ class Renderer {
             }
         }
 
-        bool drawFrame(bool saveFrameRequested, bool framebufferResized, const Camera& camera, const Mesh& mesh) {
+        bool drawFrame(bool saveFrameRequested, bool framebufferResized, const Camera& camera, const Scene& scene) {
             auto fenceResult = device.getLogicalDevice().waitForFences(*inFlightFences[frameIndex], vk::True, UINT64_MAX);
             if (fenceResult != vk::Result::eSuccess) {
                 throw std::runtime_error("failed to wait for fence!");
@@ -221,7 +222,7 @@ class Renderer {
 		    }
 
             updateUniformBuffer(frameIndex, camera);
-            renderImGui(canCaptureFrame, saveFrameRequested, mesh.getVertices().size(), mesh.getIndices().size());
+            renderImGui(canCaptureFrame, saveFrameRequested, 10, 10);
 
             // Create capture buffer and memory for current frame
             const bool captureFrame = saveFrameRequested && canCaptureFrame;
@@ -237,7 +238,7 @@ class Renderer {
             device.getLogicalDevice().resetFences(*inFlightFences[frameIndex]);
 
             commandBuffers[frameIndex].reset();
-		    recordCommandBuffer(imageIndex, captureFrame ? &*captureBuffer : nullptr, mesh);
+		    recordCommandBuffer(imageIndex, captureFrame ? &*captureBuffer : nullptr, scene);
 
 		    vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
 		    const vk::SubmitInfo   submitInfo{
@@ -291,7 +292,7 @@ class Renderer {
                         // rotate(glm::mat4(1.0f), glm::radians(-90.0f), glm::vec3(0.0f, 1.0f, 0.0f)) *
                         // rotate(glm::mat4(1.0f), time * glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
                         // rotate(glm::mat4(1.0f), /*time*/ glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)) *
-                        glm::scale(glm::mat4(1.0f), glm::vec3(10.0f, 10.0f, 10.0f));
+                        glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f));
 
             const glm::vec3 cameraDirection(
                 std::cos(camera.pitch) * std::sin(camera.yaw),
@@ -304,7 +305,7 @@ class Renderer {
             memcpy(uniformBuffersMapped[currentImage], &ubo, sizeof(ubo));
 	    }
 
-        void recordCommandBuffer(uint32_t imageIndex, const vk::Buffer *captureBuffer, const Mesh& mesh) {
+        void recordCommandBuffer(uint32_t imageIndex, const vk::Buffer *captureBuffer, const Scene& scene) {
             auto &commandBuffer = commandBuffers[frameIndex];
 
 		    commandBuffer.begin({});
@@ -373,12 +374,24 @@ class Renderer {
             // Render to swapchain image
             commandBuffer.beginRendering(renderingInfo);
             commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline.getGraphicsPipeline());
-            commandBuffer.bindVertexBuffers(0, *mesh.getVertexBuffer(), {0});
-            commandBuffers[frameIndex].bindIndexBuffer(*mesh.getIndexBuffer(), 0, vk::IndexType::eUint32);
-            commandBuffer.setViewport(0, vk::Viewport(0.0f, static_cast<float>(swapchain.getSwapchainExtent().height), static_cast<float>(swapchain.getSwapchainExtent().width), -static_cast<float>(swapchain.getSwapchainExtent().height), 0.0f, 1.0f));
+
+            commandBuffer.setViewport(0, 
+                                      vk::Viewport(
+                                        0.0f, 
+                                        static_cast<float>(swapchain.getSwapchainExtent().height), 
+                                        static_cast<float>(swapchain.getSwapchainExtent().width), 
+                                        -static_cast<float>(swapchain.getSwapchainExtent().height), 
+                                        0.0f, 
+                                        1.0f));
             commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swapchain.getSwapchainExtent()));
             commandBuffers[frameIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.getPipelineLayout(), 0, *descriptorSets[frameIndex], nullptr);
-            commandBuffer.drawIndexed(static_cast<uint32_t>(mesh.getIndices().size()), 1, 0, 0, 0);
+
+            for (const Object& object: scene.getObjects()) {
+                commandBuffer.bindVertexBuffers(0, *object.mesh->getVertexBuffer(), {0});
+                commandBuffers[frameIndex].bindIndexBuffer(*object.mesh->getIndexBuffer(), 0, vk::IndexType::eUint32);
+                commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh->getIndices().size()), 1, 0, 0, 0);
+            }
+
             ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), static_cast<VkCommandBuffer>(*commandBuffer));
             commandBuffer.endRendering();
 

@@ -23,8 +23,8 @@ class Mesh {
     public:
         Mesh(const Device& device) {
             // loadModel(MODEL_PATH);
-            // createCubeMesh();
-            createPlaneMesh();
+            createCubeMesh();
+            // createPlaneMesh();
             createVertexBuffer(device);
             createIndexBuffer(device);
         }
