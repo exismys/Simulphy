@@ -246,8 +246,11 @@ class Application {
                 movement = glm::normalize(movement);
             }
             camera.position += movement * movementSpeed * deltaTime;
-            if (keys[SDL_SCANCODE_SPACE]) {
+            if (keys[SDL_SCANCODE_E]) {
                 camera.position.y += movementSpeed * deltaTime;
+            }
+            if (keys[SDL_SCANCODE_Q]) {
+                camera.position.y -= movementSpeed * deltaTime;
             }
         }
 

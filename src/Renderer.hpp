@@ -457,13 +457,15 @@ class Renderer {
             );
 
             for (const Object& object: scene.getObjects()) {
-                commandBuffers[frameIndex].bindDescriptorSets(
-                    vk::PipelineBindPoint::eGraphics, 
-                    pipeline.getPipelineLayout(), 
-                    1, 
-                    *materialDescriptorSets[object.materialIndex], 
-                    nullptr
-                );
+                if (object.hasTexture) {
+                    commandBuffers[frameIndex].bindDescriptorSets(
+                        vk::PipelineBindPoint::eGraphics, 
+                        pipeline.getPipelineLayout(), 
+                        1, 
+                        *materialDescriptorSets[object.materialIndex],
+                        nullptr
+                    );
+                }
 
                 //----------------------------------------------------------------------
                 // Model transform
@@ -474,12 +476,18 @@ class Renderer {
                 model = glm::rotate(model, object.transform.rotation.z, glm::vec3(0.0f, 0.0f, 1.0f));
                 model = glm::scale(model, object.transform.scale);
                 //----------------------------------------------------------------------
+
+                ObjectTransform transform {
+                    .model = model,
+                    .useTexture = object.hasTexture ? 1u : 0u
+                };
                 
                 commandBuffer.pushConstants(*pipeline.getPipelineLayout(),
-                                            vk::ShaderStageFlagBits::eVertex,
+                                            vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                                             0,
-                                            sizeof(model),
-                                            &model);
+                                            sizeof(transform),
+                                            &transform);
+
                 commandBuffer.bindVertexBuffers(0, *object.mesh->getVertexBuffer(), {0});
                 commandBuffers[frameIndex].bindIndexBuffer(*object.mesh->getIndexBuffer(), 0, vk::IndexType::eUint32);
                 commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh->getIndices().size()), 1, 0, 0, 0);

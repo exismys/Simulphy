@@ -12,7 +12,9 @@ public:
     const Texture* texture = nullptr;
 
     Material(const Device& device, const std::string texturePath) {
-        texture = new Texture(device, texturePath);   
+        if (!texturePath.empty()) {
+            texture = new Texture(device, texturePath);
+        }
     }
 
     ~Material() {

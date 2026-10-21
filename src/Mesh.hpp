@@ -21,10 +21,10 @@ class Mesh {
         vk::raii::DeviceMemory indexBufferMemory = nullptr;
 
     public:
-        Mesh(const Device& device) {
+        Mesh(const Device& device, const std::string meshType) {
             // loadModel(MODEL_PATH);
-            createCubeMesh();
-            // createPlaneMesh();
+            if (meshType == "cube") createCubeMesh();
+            if (meshType == "plane") createPlaneMesh();
             createVertexBuffer(device);
             createIndexBuffer(device);
         }

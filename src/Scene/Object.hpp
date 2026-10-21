@@ -15,5 +15,6 @@ namespace Simulphy {
         Mesh* mesh = nullptr;
         const uint32_t materialIndex;
         Transform transform;
+        bool hasTexture;
     };
 }

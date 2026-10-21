@@ -9,6 +9,11 @@
 #include "Vertex.hpp"
 
 namespace Simulphy {
+
+struct ObjectTransform {
+    glm::mat4 model;
+    uint32_t useTexture;
+};
 class Pipeline {
     private:
         // vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
@@ -178,9 +183,9 @@ class Pipeline {
                 *materialDescriptorSetLayout
             };
             vk::PushConstantRange modelPushConstantRange{
-                .stageFlags = vk::ShaderStageFlagBits::eVertex,
+                .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
                 .offset = 0,
-                .size = sizeof(glm::mat4)
+                .size = sizeof(ObjectTransform)
             };
             vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
                 .setLayoutCount         = static_cast<uint32_t>(setLayouts.size()), 

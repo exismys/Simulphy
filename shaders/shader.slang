@@ -14,6 +14,7 @@ ConstantBuffer<UniformBuffer> ubo;
 
 struct ObjectTransform {
     float4x4 model;
+    uint useTexture;
 };
 [[vk::push_constant]] ConstantBuffer<ObjectTransform> objectTransform;
 
@@ -37,6 +38,9 @@ Sampler2D texture;
 
 [shader("fragment")]
 float4 fragMain(VSOutput vertIn) : SV_TARGET {
-    return texture.Sample(vertIn.fragTexCoord);
-    // return float4(vertIn.fragTexCoord, 0.0, 1.0);
+    if (objectTransform.useTexture != 0) {
+        return texture.Sample(vertIn.fragTexCoord);
+    }
+    
+    return float4(vertIn.color, 1.0);
 }
