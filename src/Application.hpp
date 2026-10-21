@@ -26,7 +26,6 @@
 #include "Pipeline.hpp"
 #include "Surface.hpp"
 #include "Swapchain.hpp"
-#include "Texture.hpp"
 #include "Camera.hpp"
 #include "Renderer.hpp"
 #include "Scene/Scene.hpp"
@@ -50,16 +49,14 @@ class Application {
         Simulphy::Swapchain swapchain = Simulphy::Swapchain(surface, device, window);
         Simulphy::Pipeline pipeline = Simulphy::Pipeline(device, swapchain);
 
-        Simulphy::Texture texture = Simulphy::Texture(device);
-        Simulphy::Scene scene = Simulphy::Scene(device, &texture);
-
+        Simulphy::Scene scene = Simulphy::Scene(device);
 
         Simulphy::Camera camera{
             {0, 2, 15},
             {0, 0, 0}
         };
 
-        Simulphy::Renderer renderer = Simulphy::Renderer(device, swapchain, pipeline, texture);
+        Simulphy::Renderer renderer = Simulphy::Renderer(device, swapchain, pipeline, scene);
 
         // ImGui vars
         VkFormat imguiColorFormat = VK_FORMAT_UNDEFINED;
@@ -123,7 +120,7 @@ class Application {
                 if (windowShouldClose) {
                     break;
                 }
-                bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera, scene);
+                bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera);
                 if (saveFrameRequested) saveFrameRequested = false;
                 if (framebufferResized) framebufferResized = false;
                 if (!result) {

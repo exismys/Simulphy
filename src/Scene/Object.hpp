@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 
 #include "../Mesh.hpp"
-#include "../Texture.hpp"
 
 namespace Simulphy {
     struct Transform {
@@ -14,7 +13,7 @@ namespace Simulphy {
 
     struct Object {
         Mesh* mesh = nullptr;
-        const Texture* texture = nullptr;
+        const uint32_t materialIndex;
         Transform transform;
     };
 }

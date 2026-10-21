@@ -8,6 +8,8 @@ struct UniformBuffer {
     float4x4 view;
     float4x4 proj;
 };
+
+[[vk::binding(0, 0)]]
 ConstantBuffer<UniformBuffer> ubo;
 
 struct ObjectTransform {
@@ -30,6 +32,7 @@ VSOutput vertMain(VSInput input) {
     return output;
 }
 
+[[vk::binding(0, 1)]]
 Sampler2D texture;
 
 [shader("fragment")]

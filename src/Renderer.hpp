@@ -27,6 +27,7 @@ class Renderer {
         const Device& device;
         const Swapchain& swapchain;
         const Pipeline& pipeline;
+        const Scene& scene;
 
         vk::raii::Image colorImage = nullptr;
         vk::raii::DeviceMemory colorImageMemory = nullptr;
@@ -41,7 +42,8 @@ class Renderer {
         std::vector<void *> uniformBuffersMapped;
 
         vk::raii::DescriptorPool descriptorPool = nullptr;
-	    std::vector<vk::raii::DescriptorSet> descriptorSets;
+	    std::vector<vk::raii::DescriptorSet> cameraDescriptorSets;
+        std::vector<vk::raii::DescriptorSet> materialDescriptorSets;
 
         std::vector<vk::raii::CommandBuffer> commandBuffers;
 
@@ -54,12 +56,13 @@ class Renderer {
         bool canCaptureFrame = true;
 
     public:
-        Renderer(const Device& device, const Swapchain& swapchain, const Pipeline& pipeline, const Texture& texture): device(device), swapchain(swapchain), pipeline(pipeline) {
+        Renderer(const Device& device, const Swapchain& swapchain, const Pipeline& pipeline, const Scene& scene): device(device), swapchain(swapchain), pipeline(pipeline), scene(scene) {
             createColorResources();
             createDepthResources();
             createUniformBuffers(device);
             createDescriptorPool();
-            createDescriptorSets(texture);
+            createCameraDescriptorSets();
+            createMaterialDescriptorSet();
             createCommandBuffer();
             createSyncObjects();
         }
@@ -103,6 +106,7 @@ class Renderer {
 	    }
 
         void createDescriptorPool() {
+            const uint32_t MAX_MATERIALS = static_cast<uint32_t>(scene.getMaterials().size());
             std::array<vk::DescriptorPoolSize, 2> poolSize{
                 {
                     {
@@ -111,13 +115,13 @@ class Renderer {
                     }, 
                     {
                         .type = vk::DescriptorType::eCombinedImageSampler,
-                        .descriptorCount = MAX_FRAMES_IN_FLIGHT
+                        .descriptorCount = MAX_MATERIALS
                     }
                 }
             };
             vk::DescriptorPoolCreateInfo poolInfo{
                 .flags = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet, 
-                .maxSets = MAX_FRAMES_IN_FLIGHT, 
+                .maxSets = MAX_FRAMES_IN_FLIGHT + MAX_MATERIALS, 
                 .poolSizeCount = static_cast<uint32_t>(poolSize.size()), 
                 .pPoolSizes = poolSize.data()
             };
@@ -133,57 +137,127 @@ class Renderer {
         //            |           `-- Descriptor 1 (binding 1, image sampler)
         //            `-- Descriptor Set 1 (1st frame in flight)
         //----------------------------------------------------------------------
-        void createDescriptorSets(const Texture& texture) {
-            std::vector<vk::DescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, *pipeline.getDescriptorSetLayout());
+        // void createDescriptorSets(const Texture& texture) {
+        //     std::vector<vk::DescriptorSetLayout> layouts(MAX_FRAMES_IN_FLIGHT, *pipeline.getDescriptorSetLayout());
+        //     vk::DescriptorSetAllocateInfo allocInfo{
+        //         .descriptorPool     = descriptorPool,
+        //         .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        //         .pSetLayouts        = layouts.data()
+        //     };
+
+        //     descriptorSets = device.getLogicalDevice().allocateDescriptorSets(allocInfo);
+
+        //     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+        //         vk::DescriptorBufferInfo bufferInfo{
+        //             .buffer = uniformBuffers[i], 
+        //             .offset = 0, 
+        //             .range  = sizeof(UniformBufferObject)
+        //         };
+        //         vk::DescriptorImageInfo imageInfo{
+        //             .sampler     = texture.getTextureSampler(), 
+        //             .imageView   = texture.getTextureImageView(), 
+        //             .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
+        //         };
+        //         std::array<vk::WriteDescriptorSet, 2> descriptorWrites{
+        //             {
+        //                 {
+        //                     .dstSet          = descriptorSets[i],
+        //                     .dstBinding      = 0,
+        //                     .dstArrayElement = 0,
+        //                     .descriptorCount = 1,
+        //                     .descriptorType  = vk::DescriptorType::eUniformBuffer,
+        //                     .pBufferInfo     = &bufferInfo
+
+        //                 },
+        //                 {
+        //                     .dstSet          = descriptorSets[i],
+        //                     .dstBinding      = 1,
+        //                     .dstArrayElement = 0,
+        //                     .descriptorCount = 1,
+        //                     .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
+        //                     .pImageInfo      = &imageInfo
+        //                 }
+        //             }
+
+        //         };
+        //         device.getLogicalDevice().updateDescriptorSets(descriptorWrites, {});
+        //     }
+	    // }
+
+        void createCameraDescriptorSets() {
+            std::vector<vk::DescriptorSetLayout> layouts(
+                MAX_FRAMES_IN_FLIGHT,
+                *pipeline.getCameraDescriptorSetLayout()
+            );
+
             vk::DescriptorSetAllocateInfo allocInfo{
-                .descriptorPool     = descriptorPool,
+                .descriptorPool = descriptorPool,
                 .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
-                .pSetLayouts        = layouts.data()
+                .pSetLayouts = layouts.data()
             };
 
-            descriptorSets = device.getLogicalDevice().allocateDescriptorSets(allocInfo);
+            cameraDescriptorSets = device.getLogicalDevice().allocateDescriptorSets(allocInfo);
 
             for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
                 vk::DescriptorBufferInfo bufferInfo{
-                    .buffer = uniformBuffers[i], 
-                    .offset = 0, 
-                    .range  = sizeof(UniformBufferObject)
+                    .buffer = uniformBuffers[i],
+                    .offset = 0,
+                    .range = sizeof(UniformBufferObject)
                 };
+
+                vk::WriteDescriptorSet descriptorWrite{
+                    .dstSet = cameraDescriptorSets[i],
+                    .dstBinding = 0,
+                    .dstArrayElement = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = vk::DescriptorType::eUniformBuffer,
+                    .pBufferInfo = &bufferInfo
+                };
+
+                device.getLogicalDevice().updateDescriptorSets(descriptorWrite, {});
+            }
+        }
+
+        void createMaterialDescriptorSet() {
+            const uint32_t MAX_MATERIALS = static_cast<uint32_t>(scene.getMaterials().size());
+            std::vector<vk::DescriptorSetLayout> layouts(
+                MAX_MATERIALS,
+                *pipeline.getMaterialDescriptorSetLayout()
+            );
+
+            vk::DescriptorSetAllocateInfo allocInfo{
+                .descriptorPool = descriptorPool,
+                .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+                .pSetLayouts = layouts.data()
+            };
+
+            materialDescriptorSets = device.getLogicalDevice().allocateDescriptorSets(allocInfo);
+
+            for (size_t i = 0; i < MAX_MATERIALS; i++) {
+
                 vk::DescriptorImageInfo imageInfo{
-                    .sampler     = texture.getTextureSampler(), 
-                    .imageView   = texture.getTextureImageView(), 
+                    .sampler = scene.getMaterials()[i]->texture->getTextureSampler(),
+                    .imageView = scene.getMaterials()[i]->texture->getTextureImageView(),
                     .imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal
                 };
-                std::array<vk::WriteDescriptorSet, 2> descriptorWrites{
-                    {
-                        {
-                            .dstSet          = descriptorSets[i],
-                            .dstBinding      = 0,
-                            .dstArrayElement = 0,
-                            .descriptorCount = 1,
-                            .descriptorType  = vk::DescriptorType::eUniformBuffer,
-                            .pBufferInfo     = &bufferInfo
 
-                        },
-                        {
-                            .dstSet          = descriptorSets[i],
-                            .dstBinding      = 1,
-                            .dstArrayElement = 0,
-                            .descriptorCount = 1,
-                            .descriptorType  = vk::DescriptorType::eCombinedImageSampler,
-                            .pImageInfo      = &imageInfo
-                        }
-                    }
-
+                vk::WriteDescriptorSet descriptorWrite{
+                    .dstSet = materialDescriptorSets[i],
+                    .dstBinding = 0,
+                    .dstArrayElement = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                    .pImageInfo = &imageInfo
                 };
-                device.getLogicalDevice().updateDescriptorSets(descriptorWrites, {});
+
+                device.getLogicalDevice().updateDescriptorSets(descriptorWrite, {});
             }
-	    }
+        }
         
         void createCommandBuffer() {
             vk::CommandBufferAllocateInfo allocInfo{
                 .commandPool        = device.getCommandPool(), 
-                .level              = vk::CommandBufferLevel::ePrimary, 
+                .level              = vk::CommandBufferLevel::ePrimary,
                 .commandBufferCount = MAX_FRAMES_IN_FLIGHT
             };
             commandBuffers = vk::raii::CommandBuffers(device.getLogicalDevice(), allocInfo);
@@ -202,7 +276,7 @@ class Renderer {
             }
         }
 
-        bool drawFrame(bool saveFrameRequested, bool framebufferResized, const Camera& camera, const Scene& scene) {
+        bool drawFrame(bool saveFrameRequested, bool framebufferResized, const Camera& camera) {
             auto fenceResult = device.getLogicalDevice().waitForFences(*inFlightFences[frameIndex], vk::True, UINT64_MAX);
             if (fenceResult != vk::Result::eSuccess) {
                 throw std::runtime_error("failed to wait for fence!");
@@ -373,9 +447,24 @@ class Renderer {
                                         0.0f, 
                                         1.0f));
             commandBuffer.setScissor(0, vk::Rect2D(vk::Offset2D(0, 0), swapchain.getSwapchainExtent()));
-            commandBuffers[frameIndex].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline.getPipelineLayout(), 0, *descriptorSets[frameIndex], nullptr);
+
+            commandBuffers[frameIndex].bindDescriptorSets(
+                vk::PipelineBindPoint::eGraphics, 
+                pipeline.getPipelineLayout(), 
+                0, 
+                *cameraDescriptorSets[frameIndex], 
+                nullptr
+            );
 
             for (const Object& object: scene.getObjects()) {
+                commandBuffers[frameIndex].bindDescriptorSets(
+                    vk::PipelineBindPoint::eGraphics, 
+                    pipeline.getPipelineLayout(), 
+                    1, 
+                    *materialDescriptorSets[object.materialIndex], 
+                    nullptr
+                );
+
                 //----------------------------------------------------------------------
                 // Model transform
                 //----------------------------------------------------------------------

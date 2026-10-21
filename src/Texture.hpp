@@ -8,8 +8,6 @@
 #include "Device.hpp"
 #include "Utilities.hpp"
 
-const std::string TEXTURE_PATH = "textures/test-textures/Menlogate.jpg";
-
 namespace Simulphy {
 class Texture {
     private:
@@ -20,8 +18,8 @@ class Texture {
         vk::raii::Sampler textureSampler = nullptr;
 
     public:
-        Texture(const Device& device) {
-            createTextureImage(device);
+        Texture(const Device& device, const std::string texturePath) {
+            createTextureImage(device, texturePath);
             createTextureImageView(device);
             createTextureSampler(device);
         }
@@ -34,14 +32,14 @@ class Texture {
             return textureSampler;
         }
 
-        void createTextureImage(const Device& device) {
+        void createTextureImage(const Device& device, const std::string texturePath) {
             int texWidth, texHeight, texChannels;
-            stbi_uc *pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+            stbi_uc *pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
             vk::DeviceSize imageSize = texWidth * texHeight * 4;
             mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
             if (!pixels) {
-                throw std::runtime_error("failed to load texture image!");
+                throw std::runtime_error("failed to load texture image: " + texturePath);
             }
 
             auto [stagingBuffer, stagingBufferMemory] = device.createBuffer(imageSize, vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);

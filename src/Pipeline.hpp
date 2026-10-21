@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <vulkan/vulkan_raii.hpp>
 
 #include "Device.hpp"
@@ -10,7 +11,10 @@
 namespace Simulphy {
 class Pipeline {
     private:
-        vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
+        // vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
+        vk::raii::DescriptorSetLayout cameraDescriptorSetLayout = nullptr;
+        vk::raii::DescriptorSetLayout materialDescriptorSetLayout = nullptr;
+
         vk::raii::PipelineLayout pipelineLayout = nullptr;
         vk::raii::Pipeline graphicsPipeline = nullptr;
 
@@ -18,7 +22,7 @@ class Pipeline {
 
     public:
         Pipeline(const Device& device, const Swapchain& swapchain) {
-            createDescriptorSetLayout(device);
+            createDescriptorSetLayouts(device);
             createGraphicsPipeline(device, swapchain);
         }
 
@@ -26,8 +30,16 @@ class Pipeline {
             return depthFormat;
         }
 
-        const vk::raii::DescriptorSetLayout& getDescriptorSetLayout() const {
-            return descriptorSetLayout;
+        // const vk::raii::DescriptorSetLayout& getDescriptorSetLayout() const {
+        //     return descriptorSetLayout;
+        // }
+
+        const vk::raii::DescriptorSetLayout& getCameraDescriptorSetLayout() const {
+            return cameraDescriptorSetLayout;
+        }
+
+        const vk::raii::DescriptorSetLayout& getMaterialDescriptorSetLayout() const {
+            return materialDescriptorSetLayout;
         }
 
         const vk::raii::Pipeline& getGraphicsPipeline() const {
@@ -38,28 +50,67 @@ class Pipeline {
             return pipelineLayout;
         }
 
-        void createDescriptorSetLayout(const Device& device) {
-            std::array<vk::DescriptorSetLayoutBinding, 2> bindings{
-                {
-                    {
-                        .binding = 0,
-                        .descriptorType = vk::DescriptorType::eUniformBuffer,
-                        .descriptorCount = 1,
-                        .stageFlags = vk::ShaderStageFlagBits::eVertex
-                    },
-                    {
-                        .binding = 1,
-                        .descriptorType = vk::DescriptorType::eCombinedImageSampler,
-                        .descriptorCount = 1,
-                        .stageFlags = vk::ShaderStageFlagBits::eFragment
-                    }
-                }
+        //----------------------------------------------------------------------
+        // Define the layout of a single descriptor set
+        //                        ^^^^^^^^^^^^^^^^^^^^^
+        //                               `- may container multiple descriptors
+        //                                  with bindings 0, 1, 2, ...
+        //----------------------------------------------------------------------
+        // void createDescriptorSetLayout(const Device& device) {
+        //     std::array<vk::DescriptorSetLayoutBinding, 2> bindings{
+        //         {
+        //             {
+        //                 .binding = 0,
+        //                 .descriptorType = vk::DescriptorType::eUniformBuffer,
+        //                 .descriptorCount = 1,
+        //                 .stageFlags = vk::ShaderStageFlagBits::eVertex
+        //             },
+        //             {
+        //                 .binding = 1,
+        //                 .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+        //                 .descriptorCount = 1,
+        //                 .stageFlags = vk::ShaderStageFlagBits::eFragment
+        //             }
+        //         }
+        //     };
+        //     vk::DescriptorSetLayoutCreateInfo layoutInfo{
+        //         .bindingCount = static_cast<uint32_t>(bindings.size()),
+        //         .pBindings = bindings.data()
+        //     };
+        //     descriptorSetLayout = vk::raii::DescriptorSetLayout(device.getLogicalDevice(), layoutInfo);
+        // }
+
+        void createDescriptorSetLayouts(const Device& device) {
+            // Set 0: camera
+            vk::DescriptorSetLayoutBinding cameraBinding{
+                .binding = 0,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eVertex
             };
-            vk::DescriptorSetLayoutCreateInfo layoutInfo{
-                .bindingCount = static_cast<uint32_t>(bindings.size()),
-                .pBindings = bindings.data()
+
+            vk::DescriptorSetLayoutCreateInfo cameraLayoutInfo{
+                .bindingCount = 1,
+                .pBindings = &cameraBinding
             };
-            descriptorSetLayout = vk::raii::DescriptorSetLayout(device.getLogicalDevice(), layoutInfo);
+
+            cameraDescriptorSetLayout = vk::raii::DescriptorSetLayout(device.getLogicalDevice(), cameraLayoutInfo);
+
+            // Set 1: Material
+            vk::DescriptorSetLayoutBinding materialBinding{
+                .binding = 0,
+                .descriptorType = vk::DescriptorType::eCombinedImageSampler,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eFragment
+            };
+
+            vk::DescriptorSetLayoutCreateInfo materialLayoutInfo{
+                .bindingCount = 1,
+                .pBindings = &materialBinding
+            };
+
+            materialDescriptorSetLayout = vk::raii::DescriptorSetLayout(device.getLogicalDevice(), materialLayoutInfo);
+
         }
 
         void createGraphicsPipeline(const Device& device, const Swapchain& swapchain) {
@@ -122,14 +173,18 @@ class Pipeline {
                 .pDynamicStates    = dynamicStates.data()
             };
 
+            std::array<vk::DescriptorSetLayout, 2> setLayouts{
+                *cameraDescriptorSetLayout,
+                *materialDescriptorSetLayout
+            };
             vk::PushConstantRange modelPushConstantRange{
                 .stageFlags = vk::ShaderStageFlagBits::eVertex,
                 .offset = 0,
                 .size = sizeof(glm::mat4)
             };
             vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
-                .setLayoutCount         = 1, 
-                .pSetLayouts            = &*descriptorSetLayout, 
+                .setLayoutCount         = static_cast<uint32_t>(setLayouts.size()), 
+                .pSetLayouts            = setLayouts.data(), 
                 .pushConstantRangeCount = 1,
                 .pPushConstantRanges    = &modelPushConstantRange
             };
