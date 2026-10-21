@@ -13,11 +13,10 @@ private:
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
 
+    uint32_t nonSimObjects;
+
 public:
-    Scene(const Device& device) {
-        Simulation sim;
-        createSceneFromSim(device, sim);
-    }
+    Scene(){}
 
     ~Scene() {
         for (Mesh* mesh: meshes) {
@@ -41,26 +40,27 @@ public:
         return materials;
     }
 
-    void createSceneFromSim(const Device& device, Simulation& sim) {
+    static Scene createSceneFromSim(const Device& device, const Simulation& sim) {
+        Scene scene;
         // Materials
-        materials.push_back(
+        scene.materials.push_back(
             new Material(device, "textures/moss-floor-texture.jpg")
         );
 
         // Meshes
-        meshes.push_back(
+        scene.meshes.push_back(
             new Mesh(device, "plane")
         );
 
-        for (Physics::Particle& particle: sim.particles) {
-            meshes.push_back(
+        for (const Physics::Particle& particle: sim.particles) {
+            scene.meshes.push_back(
                 new Mesh(device, "cube")
             );
         }
 
         // Objects
-        objects.push_back({
-            .mesh = meshes[0],
+        scene.objects.push_back({
+            .mesh = scene.meshes[0],
             .materialIndex = 0,
             .transform = Transform{
                 glm::vec3{0.0f, 0.0f, 0.0f},
@@ -70,9 +70,11 @@ public:
             .hasTexture = true
         });
 
-        for (Physics::Particle& particle: sim.particles) {
-            objects.push_back({
-                .mesh = meshes[1],
+        scene.nonSimObjects = scene.objects.size();
+
+        for (const Physics::Particle& particle: sim.particles) {
+            scene.objects.push_back({
+                .mesh = scene.meshes[1],
                 .materialIndex = 0,
                 .transform = Transform{
                     particle.position,
@@ -82,6 +84,14 @@ public:
                 .hasTexture = false
             });
 
+        }
+
+        return scene;
+    }
+
+    void updateSceneFromSim(const Simulation& sim) {
+        for (int i = nonSimObjects; i < objects.size(); i++) {
+            objects[i].transform.position = sim.particles[i-1].position;
         }
     }
 

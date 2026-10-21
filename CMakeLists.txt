@@ -48,6 +48,7 @@ set(SOURCES
     src/main.cpp
     src/Utilities.cpp
     src/stb_impl.cpp
+    src/Physics/Particle.cpp
 )
 
 # Create the executable target named "BeLightVulkan" from the specified source files

@@ -20,6 +20,7 @@
 #include <cmath>
 #include <chrono>
 
+#include "Simulation/Simulation.hpp"
 #include "Window.hpp"
 #include "Instance.hpp"
 #include "Device.hpp"
@@ -49,7 +50,8 @@ class Application {
         Simulphy::Swapchain swapchain = Simulphy::Swapchain(surface, device, window);
         Simulphy::Pipeline pipeline = Simulphy::Pipeline(device, swapchain);
 
-        Simulphy::Scene scene = Simulphy::Scene(device);
+        Simulphy::Simulation simulation = Simulphy::Simulation();
+        Simulphy::Scene scene = Simulphy::Scene::createSceneFromSim(device, simulation);
 
         Simulphy::Camera camera{
             {0, 2, 15},
@@ -120,6 +122,11 @@ class Application {
                 if (windowShouldClose) {
                     break;
                 }
+                if (keys[SDL_SCANCODE_U]) {
+                    simulation.update(frameTime);
+                    scene.updateSceneFromSim(simulation);
+                }
+
                 bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera);
                 if (saveFrameRequested) saveFrameRequested = false;
                 if (framebufferResized) framebufferResized = false;

@@ -24,6 +24,12 @@ public:
 
         particles.push_back(particle);
     }
+
+    void update(float frameTime) {
+        particles[0].acceleration = glm::dvec3{0.0, 1.0f, 0.0f};
+
+        Physics::integrate(particles[0], frameTime);
+    }
 };
 
 }
