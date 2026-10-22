@@ -52,11 +52,9 @@ public:
             new Mesh(device, "plane")
         );
 
-        for (const Physics::Particle& particle: sim.particles) {
-            scene.meshes.push_back(
-                new Mesh(device, "cube")
-            );
-        }
+        scene.meshes.push_back(
+            new Mesh(device, "sphere")
+        );
 
         // Objects
         scene.objects.push_back({

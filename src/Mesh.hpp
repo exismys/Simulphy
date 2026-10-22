@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
@@ -25,6 +26,7 @@ class Mesh {
             // loadModel(MODEL_PATH);
             if (meshType == "cube") createCubeMesh();
             if (meshType == "plane") createPlaneMesh();
+            if (meshType == "sphere") createSphereMesh(10, 10, 1, {0, 1, 0});
             createVertexBuffer(device);
             createIndexBuffer(device);
         }
@@ -149,6 +151,49 @@ class Mesh {
             indices = {
                 0, 1, 2, 2, 3, 0
             };
+        }
+
+        void createSphereMesh(int latitudes, int longitudes, float radius, glm::vec3 color) {
+            const double PI = 3.14159265359f;
+
+            //----------------------------------------------------------------------
+            // Latitude: imaginary horizontal lines on a sphere
+            // Longitude: imaginary verticle lines on a sphere
+            //----------------------------------------------------------------------
+            for (int i = 0; i <= latitudes; i++) {
+                float theta = i * (PI / latitudes);
+                float sin_theta = std::sin(theta);
+                float cos_theta = std::cos(theta);
+
+                for (int j = 0; j <= longitudes; j++) {
+                    float phi = j * (2.0f * PI / longitudes);
+                    float sin_phi = std::sin(phi);
+                    float cos_phi = std::cos(phi);
+
+                    float x = radius * sin_theta * sin_phi;
+                    float y = radius * cos_theta;
+                    float z = radius * sin_theta * cos_phi;
+
+                    vertices.push_back(Vertex{
+                        .pos = {x, y, z},
+                        .color = color
+                    });
+                }
+            }
+
+            for (int i = 0; i < latitudes; i++) {
+                for (int j = 0; j < longitudes; j++) {
+                    // Indices for the 4 corners of the current quad
+                    uint32_t top_left = i * (longitudes + 1) + j;
+                    uint32_t top_right = top_left + 1;
+                    uint32_t bottom_left = (i + 1) * (longitudes + 1) + j;
+                    uint32_t bottom_right = bottom_left + 1;
+
+                    // Triangles with counter-clockwise winding
+                    indices.insert(indices.end(), {bottom_left, bottom_right, top_right});
+                    indices.insert(indices.end(), {top_right, top_left, bottom_left});
+                }
+            }
         }
 };
 }
