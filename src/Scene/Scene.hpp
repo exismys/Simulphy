@@ -12,6 +12,7 @@ private:
     std::vector<Object> objects;
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
+    std::vector<LightSource> lightSources; 
 
     uint32_t nonSimObjects;
 
@@ -42,6 +43,7 @@ public:
 
     static Scene createSceneFromSim(const Device& device, const Simulation& sim) {
         Scene scene;
+        
         // Materials
         scene.materials.push_back(
             new Material(device, "textures/moss-floor-texture.jpg")
@@ -54,6 +56,28 @@ public:
 
         scene.meshes.push_back(
             new Mesh(device, "sphere")
+        );
+
+        // Light Sources
+        scene.lightSources.push_back(
+            LightSource{
+                .type = LightSourceType::Ambient,
+                .intensity = 0.07, 
+            }
+        );
+        scene.lightSources.push_back(
+            LightSource{
+                .type = LightSourceType::Point,
+                .intensity = 0.6,
+                .position = {50, 1, -15},
+            }
+        );
+        scene.lightSources.push_back(
+            LightSource{
+                .type = LightSourceType::Directional,
+                .intensity = 0.33, 
+                .direction = {-1, -1, -1},
+            }
         );
 
         // Objects
