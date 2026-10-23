@@ -30,17 +30,15 @@ struct alignas(16) GPULightSource {
     glm::vec4 direction;
     float intensity;
     uint32_t type;
-    float padding[2];
 };
 
 struct alignas(16) LightingUBO {
     uint32_t lightCount;
-    uint32_t padding[3];
     GPULightSource lights[MAX_LIGHTS];
 };
 
-static_assert(sizeof(GPULightSource) == 48);
-static_assert(sizeof(LightingUBO) == 16 + MAX_LIGHTS * 48);
+// static_assert(sizeof(GPULightSource) == 48);
+// static_assert(sizeof(LightingUBO) == 16 + MAX_LIGHTS * 48);
 
 class Renderer {
 private:

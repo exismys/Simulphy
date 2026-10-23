@@ -33,7 +33,6 @@ static const uint MAX_LIGHTS = 4;
 
 struct LightingData {
     uint lightCount;
-    uint3 padding;
     LightData lights[MAX_LIGHTS];
 };
 
@@ -90,14 +89,17 @@ struct VSOutput {
     float3 color;
     float2 fragTexCoord;
     float3 normal;
+    float3 worldPosition;
 };
 
 [shader("vertex")]
 VSOutput vertMain(VSInput input) {
     VSOutput output;
-    output.pos = mul(ubo.proj, mul(ubo.view, mul(objectTransform.model, float4(input.inPosition, 1.0))));
+    float4 worldPosition = mul(objectTransform.model, float4(input.inPosition, 1.0));
+    output.pos = mul(ubo.proj, mul(ubo.view, worldPosition));
     output.color = input.inColor;
     output.fragTexCoord = input.inTexCoord;
+    output.worldPosition = worldPosition.xyz;
 
     // Transform the normals into world space
     output.normal = normalize(
@@ -123,7 +125,7 @@ float4 fragMain(VSOutput vertIn) : SV_TARGET {
     }
 
     float illumination = calculateLighting(
-        vertIn.pos.xyz,
+        vertIn.worldPosition,
         normal
     );
 
