@@ -12,7 +12,7 @@ private:
     std::vector<Object> objects;
     std::vector<Mesh*> meshes;
     std::vector<Material*> materials;
-    std::vector<LightSource> lightSources; 
+    std::vector<LightSource> lightSources;
 
     uint32_t nonSimObjects;
 
@@ -41,6 +41,10 @@ public:
         return materials;
     }
 
+    const std::vector<LightSource>& getLightSources() const {
+        return lightSources;
+    }
+
     static Scene createSceneFromSim(const Device& device, const Simulation& sim) {
         Scene scene;
         
@@ -62,7 +66,7 @@ public:
         scene.lightSources.push_back(
             LightSource{
                 .type = LightSourceType::Ambient,
-                .intensity = 0.07, 
+                .intensity = 0.07,
             }
         );
         scene.lightSources.push_back(

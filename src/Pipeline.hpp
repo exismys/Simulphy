@@ -18,6 +18,7 @@ class Pipeline {
     private:
         // vk::raii::DescriptorSetLayout descriptorSetLayout = nullptr;
         vk::raii::DescriptorSetLayout cameraDescriptorSetLayout = nullptr;
+        vk::raii::DescriptorSetLayout lightingDescriptorSetLayout = nullptr;
         vk::raii::DescriptorSetLayout materialDescriptorSetLayout = nullptr;
 
         vk::raii::PipelineLayout pipelineLayout = nullptr;
@@ -41,6 +42,10 @@ class Pipeline {
 
         const vk::raii::DescriptorSetLayout& getCameraDescriptorSetLayout() const {
             return cameraDescriptorSetLayout;
+        }
+
+        const vk::raii::DescriptorSetLayout& getLightingDescriptorSetLayout() const {
+            return lightingDescriptorSetLayout;
         }
 
         const vk::raii::DescriptorSetLayout& getMaterialDescriptorSetLayout() const {
@@ -100,6 +105,21 @@ class Pipeline {
             };
 
             cameraDescriptorSetLayout = vk::raii::DescriptorSetLayout(device.getLogicalDevice(), cameraLayoutInfo);
+
+            // Set 1: lighting
+            vk::DescriptorSetLayoutBinding lightingBinding{
+                .binding = 0,
+                .descriptorType = vk::DescriptorType::eUniformBuffer,
+                .descriptorCount = 1,
+                .stageFlags = vk::ShaderStageFlagBits::eFragment
+            };
+
+            vk::DescriptorSetLayoutCreateInfo lightingLayoutInfo{
+                .bindingCount = 1,
+                .pBindings = &lightingBinding
+            };
+
+            lightingDescriptorSetLayout = vk::raii::DescriptorSetLayout(device.getLogicalDevice(), lightingLayoutInfo);
 
             // Set 1: Material
             vk::DescriptorSetLayoutBinding materialBinding{
@@ -178,8 +198,9 @@ class Pipeline {
                 .pDynamicStates    = dynamicStates.data()
             };
 
-            std::array<vk::DescriptorSetLayout, 2> setLayouts{
+            std::array<vk::DescriptorSetLayout, 3> setLayouts{
                 *cameraDescriptorSetLayout,
+                *lightingDescriptorSetLayout,
                 *materialDescriptorSetLayout
             };
             vk::PushConstantRange modelPushConstantRange{

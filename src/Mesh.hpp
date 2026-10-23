@@ -148,6 +148,10 @@ class Mesh {
                 {{-0.5f, 0.0f, -0.5f}, {1.0f, 1.0f, 1.0f}, {0.0f, 1.0f}}
             };
 
+            for (Vertex& vertex : vertices) {
+                vertex.normal = {0.0f, 1.0f, 0.0f};
+            }
+
             indices = {
                 0, 1, 2, 2, 3, 0
             };
@@ -176,7 +180,8 @@ class Mesh {
 
                     vertices.push_back(Vertex{
                         .pos = {x, y, z},
-                        .color = color
+                        .color = color,
+                        .normal = {x, y, z}
                     });
                 }
             }
