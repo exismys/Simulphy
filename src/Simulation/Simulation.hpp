@@ -17,7 +17,7 @@ public:
                 .mass = 1,
                 .radius = 0.1,
 
-                .position = glm::dvec3{0.0f + i, 5.0f, 0.0f},
+                .position = glm::dvec3{0.0f + i, 15.0f, 0.0f},
                 .velocity = glm::dvec3{0.0f},
                 .acceleration = glm::dvec3{0.0f},
 

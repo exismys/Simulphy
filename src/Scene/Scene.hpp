@@ -50,7 +50,7 @@ public:
         
         // Materials
         scene.materials.push_back(
-            new Material(device, "textures/moss-floor-texture.jpg")
+            new Material(device, "textures/matte-concrete-texture-seamless.png")
         );
 
         // Meshes
@@ -73,7 +73,7 @@ public:
             LightSource{
                 .type = LightSourceType::Point,
                 .intensity = 0.6,
-                .position = {50, 1, -15},
+                .position = {5, 5, 0},
             }
         );
         scene.lightSources.push_back(

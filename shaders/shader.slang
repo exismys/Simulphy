@@ -68,7 +68,7 @@ float calculateLighting(float3 worldPosition, float3 normal) {
             float diffuse = max(dot(normal, L), 0.0);
 
             // Simple inverse-square distance attenuation.
-            float attenuation = 1.0 / max(distanceSquared, 0.01);
+            float attenuation = 1.0 /* / max(distanceSquared, 0.01) */;
 
             totalLightIntensity += light.intensity * diffuse * attenuation;
         }
