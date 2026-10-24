@@ -105,7 +105,7 @@ public:
                 .transform = Transform{
                     particle.position,
                     glm::vec3{0.0f},
-                    glm::vec3{1.0f},
+                    glm::vec3{static_cast<float>(particle.radius)},
                 },
                 .hasTexture = false
             });

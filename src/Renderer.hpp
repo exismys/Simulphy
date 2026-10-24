@@ -37,9 +37,6 @@ struct alignas(16) LightingUBO {
     GPULightSource lights[MAX_LIGHTS];
 };
 
-// static_assert(sizeof(GPULightSource) == 48);
-// static_assert(sizeof(LightingUBO) == 16 + MAX_LIGHTS * 48);
-
 class Renderer {
 private:
     const Device& device;

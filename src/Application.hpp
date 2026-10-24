@@ -122,10 +122,10 @@ class Application {
                 if (windowShouldClose) {
                     break;
                 }
-                if (keys[SDL_SCANCODE_U]) {
+                // if (keys[SDL_SCANCODE_U]) {
                     simulation.update(frameTime);
                     scene.updateSceneFromSim(simulation);
-                }
+                // }
 
                 bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera);
                 if (saveFrameRequested) saveFrameRequested = false;

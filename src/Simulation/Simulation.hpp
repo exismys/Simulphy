@@ -17,7 +17,7 @@ public:
                 .mass = 1,
                 .radius = 0.1,
 
-                .position = glm::dvec3{0.0f, 1.0f + i, 0.0f},
+                .position = glm::dvec3{0.0f + i, 5.0f, 0.0f},
                 .velocity = glm::dvec3{0.0f},
                 .acceleration = glm::dvec3{0.0f},
 
@@ -32,8 +32,19 @@ public:
 
     void update(float frameTime) {
         for (int i = 0; i < PARTICLES; i++) {
-            particles[i].acceleration = glm::dvec3{0.0, 1.0f, 0.0f};
-            Physics::integrate(particles[i], frameTime);
+            Physics::Particle& particle = particles[i];
+
+            particle.acceleration = glm::dvec3{0.0, -1.0f, 0.0f};
+            Physics::integrate(particle, frameTime);
+
+            // Floor collision
+            if (particle.position.y < particle.radius) {
+                particle.position.y = particle.radius;
+
+                if (particle.velocity.y < 0.0) {
+                    particle.velocity.y *= -1.0 * 0.8;
+                }
+            }
         }
     }
 };

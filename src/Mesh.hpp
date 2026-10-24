@@ -26,7 +26,7 @@ class Mesh {
             // loadModel(MODEL_PATH);
             if (meshType == "cube") createCubeMesh();
             if (meshType == "plane") createPlaneMesh();
-            if (meshType == "sphere") createSphereMesh(10, 10, 1, {0, 1, 0});
+            if (meshType == "sphere") createSphereMesh(10, 10, 1, {1, 0, 1});
             createVertexBuffer(device);
             createIndexBuffer(device);
         }
