@@ -71,6 +71,9 @@ private:
     std::vector<vk::raii::Semaphore> renderFinishedSemaphores;
     std::vector<vk::raii::Fence> inFlightFences;
 
+    uint32_t numOfVertices = 0;
+    uint32_t numOfIndices = 0;
+
     uint32_t frameIndex = 0;
 
     bool canCaptureFrame = true;
@@ -85,6 +88,7 @@ public:
         createCameraDescriptorSets();
         createLightingDescriptorSet();
         createMaterialDescriptorSet();
+        calculateSceneData();
         createCommandBuffer();
         createSyncObjects();
     }
@@ -322,6 +326,13 @@ public:
             device.getLogicalDevice().updateDescriptorSets(descriptorWrite, {});
         }
     }
+
+    void calculateSceneData() {
+        for (const Object& object: scene.getObjects()) {
+            numOfVertices = object.mesh->getVertices().size();
+            numOfIndices = object.mesh->getIndices().size();
+        }
+    }
     
     void createCommandBuffer() {
         vk::CommandBufferAllocateInfo allocInfo{
@@ -365,7 +376,7 @@ public:
 
         updateUniformBuffer(frameIndex, camera);
         updateLightingUniformBuffer();
-        renderImGui(canCaptureFrame, saveFrameRequested, 10, 10);
+        renderImGui(canCaptureFrame, saveFrameRequested, numOfVertices, numOfIndices);
 
         // Create capture buffer and memory for current frame
         const bool captureFrame = saveFrameRequested && canCaptureFrame;
