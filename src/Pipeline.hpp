@@ -23,13 +23,16 @@ class Pipeline {
 
         vk::raii::PipelineLayout pipelineLayout = nullptr;
         vk::raii::Pipeline graphicsPipeline = nullptr;
+        vk::raii::Pipeline linePipeline = nullptr;
 
         vk::Format depthFormat;
 
     public:
         Pipeline(const Device& device, const Swapchain& swapchain) {
             createDescriptorSetLayouts(device);
-            createGraphicsPipeline(device, swapchain);
+            createPipelineLayout(device);
+            graphicsPipeline = createGraphicsPipeline(device, swapchain, vk::PrimitiveTopology::eTriangleList, "fragMain");
+            linePipeline = createGraphicsPipeline(device, swapchain, vk::PrimitiveTopology::eLineList, "fragLineMain");
         }
 
         const vk::Format getDepthFormat() const {
@@ -54,6 +57,10 @@ class Pipeline {
 
         const vk::raii::Pipeline& getGraphicsPipeline() const {
             return graphicsPipeline;
+        }
+
+        const vk::raii::Pipeline& getLinePipeline() const {
+            return linePipeline;
         }
 
         const vk::raii::PipelineLayout& getPipelineLayout() const {
@@ -138,10 +145,30 @@ class Pipeline {
 
         }
 
-        void createGraphicsPipeline(const Device& device, const Swapchain& swapchain) {
+        void createPipelineLayout(const Device& device) {
+            std::array<vk::DescriptorSetLayout, 3> setLayouts{
+                *cameraDescriptorSetLayout,
+                *lightingDescriptorSetLayout,
+                *materialDescriptorSetLayout
+            };
+            vk::PushConstantRange modelPushConstantRange{
+                .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                .offset = 0,
+                .size = sizeof(ObjectTransform)
+            };
+            vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
+                .setLayoutCount         = static_cast<uint32_t>(setLayouts.size()),
+                .pSetLayouts            = setLayouts.data(),
+                .pushConstantRangeCount = 1,
+                .pPushConstantRanges    = &modelPushConstantRange
+            };
+            pipelineLayout = vk::raii::PipelineLayout(device.getLogicalDevice(), pipelineLayoutInfo);
+        }
+
+        vk::raii::Pipeline createGraphicsPipeline(const Device& device, const Swapchain& swapchain, vk::PrimitiveTopology topology, const char* fragmentEntry) {
             vk::raii::ShaderModule shaderModule = createShaderModule(device, readFile("shaders/slang.spv"));
             vk::PipelineShaderStageCreateInfo vertShaderStageInfo{.stage = vk::ShaderStageFlagBits::eVertex, .module = shaderModule, .pName = "vertMain"};
-            vk::PipelineShaderStageCreateInfo fragShaderStageInfo{.stage = vk::ShaderStageFlagBits::eFragment, .module = shaderModule, .pName = "fragMain"};
+            vk::PipelineShaderStageCreateInfo fragShaderStageInfo{.stage = vk::ShaderStageFlagBits::eFragment, .module = shaderModule, .pName = fragmentEntry};
             vk::PipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
             auto bindingDescription = Vertex::getBindingDescription();
@@ -154,14 +181,14 @@ class Pipeline {
                 .pVertexAttributeDescriptions = attributeDescriptions.data()
             };
             
-            vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = vk::PrimitiveTopology::eTriangleList};
+            vk::PipelineInputAssemblyStateCreateInfo inputAssembly{.topology = topology};
             vk::PipelineViewportStateCreateInfo viewportState{.viewportCount = 1, .scissorCount = 1};
 
             vk::PipelineRasterizationStateCreateInfo rasterizer{
                 .depthClampEnable        = vk::False,
                 .rasterizerDiscardEnable = vk::False,
                 .polygonMode             = vk::PolygonMode::eFill,
-                .cullMode                = vk::CullModeFlagBits::eBack,
+                .cullMode                = topology == vk::PrimitiveTopology::eTriangleList ? vk::CullModeFlagBits::eBack : vk::CullModeFlagBits::eNone,
                 .frontFace               = vk::FrontFace::eCounterClockwise,
                 .depthBiasEnable         = vk::False,
                 .lineWidth               = 1.0f
@@ -198,24 +225,6 @@ class Pipeline {
                 .pDynamicStates    = dynamicStates.data()
             };
 
-            std::array<vk::DescriptorSetLayout, 3> setLayouts{
-                *cameraDescriptorSetLayout,
-                *lightingDescriptorSetLayout,
-                *materialDescriptorSetLayout
-            };
-            vk::PushConstantRange modelPushConstantRange{
-                .stageFlags = vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
-                .offset = 0,
-                .size = sizeof(ObjectTransform)
-            };
-            vk::PipelineLayoutCreateInfo pipelineLayoutInfo{
-                .setLayoutCount         = static_cast<uint32_t>(setLayouts.size()), 
-                .pSetLayouts            = setLayouts.data(), 
-                .pushConstantRangeCount = 1,
-                .pPushConstantRanges    = &modelPushConstantRange
-            };
-            pipelineLayout = vk::raii::PipelineLayout(device.getLogicalDevice(), pipelineLayoutInfo);
-
             vk::PipelineRenderingCreateInfo pipelineRenderingCreateInfo{ 
                 .colorAttachmentCount    = 1, 
                 .pColorAttachmentFormats = &swapchain.getSwapchainSurfaceFormat().format 
@@ -245,7 +254,7 @@ class Pipeline {
                 }
             };
 
-            graphicsPipeline = vk::raii::Pipeline(device.getLogicalDevice(), nullptr, pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
+            return vk::raii::Pipeline(device.getLogicalDevice(), nullptr, pipelineCreateInfoChain.get<vk::GraphicsPipelineCreateInfo>());
         }
 
         [[nodiscard]] vk::raii::ShaderModule createShaderModule(const Device& device, const std::vector<char> &code) const {

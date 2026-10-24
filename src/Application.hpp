@@ -127,7 +127,7 @@ class Application {
                     scene.updateSceneFromSim(simulation);
                 // }
 
-                bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera);
+                bool result = renderer.drawFrame(saveFrameRequested, framebufferResized, camera, simulation);
                 if (saveFrameRequested) saveFrameRequested = false;
                 if (framebufferResized) framebufferResized = false;
                 if (!result) {

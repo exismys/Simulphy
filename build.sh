@@ -35,6 +35,7 @@ time_command "Compiling shaders" \
     -fvk-use-entrypoint-name \
     -entry vertMain \
     -entry fragMain \
+    -entry fragLineMain \
     -o shaders/slang.spv
 
 time_command "Configuring CMake" \

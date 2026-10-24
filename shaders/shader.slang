@@ -131,3 +131,8 @@ float4 fragMain(VSOutput vertIn) : SV_TARGET {
 
     return float4(baseColor.rgb * illumination, baseColor.a);
 }
+
+[shader("fragment")]
+float4 fragLineMain(VSOutput vertIn) : SV_TARGET {
+    return float4(vertIn.color, 1.0);
+}

@@ -56,6 +56,12 @@ private:
     std::vector<vk::raii::DeviceMemory> uniformBuffersMemory;
     std::vector<void *> uniformBuffersMapped;
 
+    std::vector<vk::raii::Buffer> lineVertexBuffers;
+    std::vector<vk::raii::DeviceMemory> lineVertexBuffersMemory;
+    std::vector<void *> lineVertexBuffersMapped;
+    vk::DeviceSize lineVertexBufferSize = 0;
+    std::vector<Vertex> lineVertices;
+
     vk::raii::Buffer lightingUniformBuffer = nullptr;
     vk::raii::DeviceMemory lightingUniformBufferMemory = nullptr;
     void* lightingUniformBuffersMapped = nullptr;
@@ -83,6 +89,7 @@ public:
         createColorResources();
         createDepthResources();
         createUniformBuffers(device);
+        createLineVertexBuffers(device, scene.getObjects().size());
         createLightingUniformBuffer(device);
         createDescriptorPool();
         createCameraDescriptorSets();
@@ -140,6 +147,43 @@ public:
                                                                                                                 vk::BufferUsageFlagBits::eUniformBuffer, 
                                                                                                                 vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
         lightingUniformBuffersMapped = lightingUniformBufferMemory.mapMemory(0, bufferSize);
+    }
+
+    void createLineVertexBuffers(const Device& device, size_t maxLineCount) {
+        lineVertexBufferSize = sizeof(Vertex) * maxLineCount * 2;
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            auto [buffer, bufferMemory] = device.createBuffer(lineVertexBufferSize,
+                                                                                    vk::BufferUsageFlagBits::eVertexBuffer,
+                                                                                    vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent);
+            lineVertexBuffers.emplace_back(std::move(buffer));
+            lineVertexBuffersMemory.emplace_back(std::move(bufferMemory));
+            lineVertexBuffersMapped.emplace_back(lineVertexBuffersMemory.back().mapMemory(0, lineVertexBufferSize));
+            lineVertices.reserve(maxLineCount * 2);
+        }
+    }
+
+    uint32_t updateLineVertexBuffer(uint32_t currentFrame, const Simulation& simulation) {
+        lineVertices.clear();
+        if (simulation.particles.size() > 1) {
+            for (size_t i = 0; i + 1 < simulation.particles.size(); i++) {
+                for (size_t particleIndex : {i, i + 1}) {
+                    lineVertices.push_back(Vertex{
+                        .pos = glm::vec3(simulation.particles[particleIndex].position),
+                        .color = {1.0f, 0.7f, 0.1f},
+                        .normal = {0.0f, 1.0f, 0.0f}
+                    });
+                }
+            }
+        }
+
+        const vk::DeviceSize vertexDataSize = sizeof(Vertex) * lineVertices.size();
+        if (vertexDataSize > lineVertexBufferSize) {
+            throw std::runtime_error("particle line vertex buffer capacity exceeded!");
+        }
+        if (vertexDataSize > 0) {
+            memcpy(lineVertexBuffersMapped[currentFrame], lineVertices.data(), static_cast<size_t>(vertexDataSize));
+        }
+        return static_cast<uint32_t>(lineVertices.size());
     }
 
     void createDescriptorPool() {
@@ -356,7 +400,7 @@ public:
         }
     }
 
-    bool drawFrame(bool saveFrameRequested, bool framebufferResized, const Camera& camera) {
+    bool drawFrame(bool saveFrameRequested, bool framebufferResized, const Camera& camera, const Simulation& simulation) {
         auto fenceResult = device.getLogicalDevice().waitForFences(*inFlightFences[frameIndex], vk::True, UINT64_MAX);
         if (fenceResult != vk::Result::eSuccess) {
             throw std::runtime_error("failed to wait for fence!");
@@ -376,6 +420,7 @@ public:
 
         updateUniformBuffer(frameIndex, camera);
         updateLightingUniformBuffer();
+        const uint32_t lineVertexCount = updateLineVertexBuffer(frameIndex, simulation);
         renderImGui(canCaptureFrame, saveFrameRequested, numOfVertices, numOfIndices);
 
         // Create capture buffer and memory for current frame
@@ -392,7 +437,7 @@ public:
         device.getLogicalDevice().resetFences(*inFlightFences[frameIndex]);
 
         commandBuffers[frameIndex].reset();
-        recordCommandBuffer(imageIndex, captureFrame ? &*captureBuffer : nullptr, scene);
+        recordCommandBuffer(imageIndex, captureFrame ? &*captureBuffer : nullptr, scene, lineVertexCount);
 
         vk::PipelineStageFlags waitDestinationStageMask(vk::PipelineStageFlagBits::eColorAttachmentOutput);
         const vk::SubmitInfo   submitInfo{
@@ -466,7 +511,7 @@ public:
         memcpy(lightingUniformBuffersMapped, &ubo, sizeof(ubo));
     }
 
-    void recordCommandBuffer(uint32_t imageIndex, const vk::Buffer *captureBuffer, const Scene& scene) {
+    void recordCommandBuffer(uint32_t imageIndex, const vk::Buffer *captureBuffer, const Scene& scene, uint32_t lineVertexCount) {
         auto &commandBuffer = commandBuffers[frameIndex];
 
         commandBuffer.begin({});
@@ -600,6 +645,21 @@ public:
             commandBuffer.bindVertexBuffers(0, *object.mesh->getVertexBuffer(), {0});
             commandBuffers[frameIndex].bindIndexBuffer(*object.mesh->getIndexBuffer(), 0, vk::IndexType::eUint32);
             commandBuffer.drawIndexed(static_cast<uint32_t>(object.mesh->getIndices().size()), 1, 0, 0, 0);
+        }
+
+        if (lineVertexCount > 0) {
+            ObjectTransform transform{
+                .model = glm::mat4(1.0f),
+                .useTexture = 0
+            };
+            commandBuffer.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline.getLinePipeline());
+            commandBuffer.pushConstants(*pipeline.getPipelineLayout(),
+                                        vk::ShaderStageFlagBits::eVertex | vk::ShaderStageFlagBits::eFragment,
+                                        0,
+                                        sizeof(transform),
+                                        &transform);
+            commandBuffer.bindVertexBuffers(0, *lineVertexBuffers[frameIndex], {0});
+            commandBuffer.draw(lineVertexCount, 1, 0, 0);
         }
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), static_cast<VkCommandBuffer>(*commandBuffer));
